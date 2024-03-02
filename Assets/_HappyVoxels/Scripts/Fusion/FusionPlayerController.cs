@@ -22,13 +22,9 @@ public class FusionPlayerController : NetworkBehaviour
         }
     }
 
-    public void Initialize(NetworkBehaviour parent) 
+    public void Initialize(Vector3 position) 
     {
-        transform.SetParent(parent.transform);
-
-        transform.localPosition = Vector3.zero;
-        transform.localRotation = Quaternion.identity;
-
+        characterController.Move(position);
         isInitialized = true;
     }
 

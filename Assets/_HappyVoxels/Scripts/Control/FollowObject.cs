@@ -7,8 +7,6 @@ public class FollowObject : MonoBehaviour
 {
     [SerializeField]
     private Transform targetToFollow;
-    [SerializeField]
-    private NetworkTransform t;
 
     public void SetTarget(Transform target) 
     {

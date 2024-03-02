@@ -1,6 +1,8 @@
 using Fusion;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class FusionPlayerManager : SimulationBehaviour
@@ -13,7 +15,10 @@ public class FusionPlayerManager : SimulationBehaviour
     [SerializeField]
     private List<Transform> playerSpawnLocations = new();
 
-    private Dictionary<PlayerRef, NetworkObject> spawnedPlayer = new();
+    private Dictionary<PlayerRef, FusionPlayer> spawnedPlayer = new();
+
+    public static Action<FusionPlayer> OnPlayerJoined;
+    public static Action<FusionPlayer> OnPlayerLeft;
 
     private void Awake()
     {
@@ -31,6 +36,7 @@ public class FusionPlayerManager : SimulationBehaviour
     {
         RunnerCallback.OnPlayerJoinedSession += PlayerJoined;       
         RunnerCallback.OnPlayerLeftSession += PlayerLeft;
+
     }
 
     private void ConnectedToServer(NetworkRunner runner)
@@ -55,12 +61,15 @@ public class FusionPlayerManager : SimulationBehaviour
         if (!spawnedPlayer.ContainsKey(player)) 
         {
             if (player == runner.LocalPlayer)
-            {                
-                var spawnLocation = playerSpawnLocations[player.AsIndex];
+            {               
 
-                runner.Spawn(playerPrefab, position: spawnLocation.position, spawnLocation.rotation, inputAuthority: player, onBeforeSpawned: (runner, obj) =>
+                runner.Spawn(playerPrefab, onBeforeSpawned: (runner, obj) =>
                 {
-                    spawnedPlayer.Add(player, obj);
+                    var fusionPlayer = obj.GetComponent<FusionPlayer>();
+
+                    spawnedPlayer.Add(player, fusionPlayer);
+
+                    OnPlayerJoined?.Invoke(fusionPlayer);
                 });
             }
         }
@@ -70,9 +79,10 @@ public class FusionPlayerManager : SimulationBehaviour
     {
         if (spawnedPlayer.ContainsKey(player))
         {
-            var playerObj = spawnedPlayer[player];
+            var fusionPlayer = spawnedPlayer[player];
 
-            runner.Despawn(playerObj);            
+            OnPlayerLeft?.Invoke(fusionPlayer);
+            runner.Despawn(fusionPlayer.Object);            
         }
     }
 }

@@ -15,20 +15,25 @@ public class FusionPlayer : NetworkBehaviour
     private AvatarType CurrentAvatarType { get; set; } = AvatarType.NONE;
    
     private PlayerAvatar currentAvatar;
-
+    
     public override void Spawned()
     {
         base.Spawned();
                
-        if (HasInputAuthority)
+        if (HasStateAuthority)
         {
-            fusionPlayerController.Initialize(this);
+
             CurrentAvatarType = defaultAvatarType;
         }
         else
         {
             ChangeAvatar(CurrentAvatarType);
         }
+    }
+
+    public void MoveToSpawnLocation(Vector3 position) 
+    {
+        fusionPlayerController.Initialize(position);
     }
 
     public void ChangeAvatar(AvatarType avatarType) 
