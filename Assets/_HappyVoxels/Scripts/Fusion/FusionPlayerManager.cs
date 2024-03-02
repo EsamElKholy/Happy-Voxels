@@ -58,7 +58,7 @@ public class FusionPlayerManager : SimulationBehaviour
             {                
                 var spawnLocation = playerSpawnLocations[player.AsIndex];
 
-                runner.Spawn(playerPrefab, position: spawnLocation.position, spawnLocation.rotation, onBeforeSpawned: (runner, obj) =>
+                runner.Spawn(playerPrefab, position: spawnLocation.position, spawnLocation.rotation, inputAuthority: player, onBeforeSpawned: (runner, obj) =>
                 {
                     spawnedPlayer.Add(player, obj);
                 });

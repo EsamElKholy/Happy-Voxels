@@ -15,31 +15,31 @@ public class PlayerAvatar : MonoBehaviour
     [SerializeField] 
     private AvatarType avatarType;
 
-    private FollowObject follow;
+    //private FollowObject follow;
 
     public AvatarType AvatarType { get { return avatarType; } }
 
-    private void Awake()
-    {
-        Initialize();
-    }
+    //private void Awake()
+    //{
+    //    Initialize();
+    //}
 
-    private void Initialize() 
-    {
-        follow = GetComponent<FollowObject>();
+    //private void Initialize() 
+    //{
+    //    follow = GetComponent<FollowObject>();
 
-    }
+    //}
 
-    public void SetFollowTarget(Transform target) 
-    {
-        if (!follow)
-        {
-            Initialize();
-        }
+    //public void SetFollowTarget(Transform target) 
+    //{
+    //    if (!follow)
+    //    {
+    //        Initialize();
+    //    }
 
-        if (follow)
-        {
-            follow.SetTarget(target);
-        }
-    }
+    //    if (follow)
+    //    {
+    //        follow.SetTarget(target);
+    //    }
+    //}
 }

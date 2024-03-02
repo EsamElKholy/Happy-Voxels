@@ -1,3 +1,4 @@
+using Fusion;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,6 +7,8 @@ public class FollowObject : MonoBehaviour
 {
     [SerializeField]
     private Transform targetToFollow;
+    [SerializeField]
+    private NetworkTransform t;
 
     public void SetTarget(Transform target) 
     {

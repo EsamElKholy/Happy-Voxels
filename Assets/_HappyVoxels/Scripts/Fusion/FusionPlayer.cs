@@ -9,29 +9,26 @@ public class FusionPlayer : NetworkBehaviour
     [SerializeField]
     private AvatarType defaultAvatarType;
     [SerializeField]
-    private PlayerController playerControllerPrefab;
+    private FusionPlayerController fusionPlayerController;
 
     [Networked, OnChangedRender(nameof(OnCurrentAvatarTypeChanged))]
     private AvatarType CurrentAvatarType { get; set; } = AvatarType.NONE;
    
-    private PlayerController playerController;
     private PlayerAvatar currentAvatar;
 
     public override void Spawned()
     {
         base.Spawned();
                
-        if (HasStateAuthority)
+        if (HasInputAuthority)
         {
-            SpawnPlayerController();
+            fusionPlayerController.Initialize(this);
             CurrentAvatarType = defaultAvatarType;
         }
-    }
-
-    private void SpawnPlayerController() 
-    {
-        var controllerObj = Instantiate(playerControllerPrefab, transform);
-        playerController = controllerObj.GetComponent<PlayerController>();
+        else
+        {
+            ChangeAvatar(CurrentAvatarType);
+        }
     }
 
     public void ChangeAvatar(AvatarType avatarType) 
@@ -51,26 +48,34 @@ public class FusionPlayer : NetworkBehaviour
             var playerAvatar = avatar.GetComponent<PlayerAvatar>();
             currentAvatar = playerAvatar;
 
-            if (HasStateAuthority)
-            {
-                if (playerAvatar)
-                {
-                    playerAvatar.SetFollowTarget(playerController.transform);
-                }
-            }
+            //if (HasStateAuthority)
+            //{
+            //    if (playerAvatar)
+            //    {
+            //        playerAvatar.SetFollowTarget(fusionPlayerController.transform);
+            //    }
+            //}
         }
+    }
+
+#if UNITY_EDITOR
+    private void OnGUI()
+    {
+        if (Object && Object.IsValid && CurrentAvatarType != defaultAvatarType)
+        {
+            RPC_ChangeAvatar(defaultAvatarType);
+        }
+    }
+#endif
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_ChangeAvatar(AvatarType avatarType) 
+    {
+        CurrentAvatarType = avatarType;
     }
 
     private void OnCurrentAvatarTypeChanged()
     {
         ChangeAvatar(CurrentAvatarType);
-    }
-
-    private void OnValidate()
-    {
-        if (Object && Object.IsValid && CurrentAvatarType != defaultAvatarType)
-        {
-            CurrentAvatarType = defaultAvatarType;
-        }
     }
 }
