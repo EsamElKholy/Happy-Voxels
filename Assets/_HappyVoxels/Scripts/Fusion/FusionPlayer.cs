@@ -47,14 +47,6 @@ public class FusionPlayer : NetworkBehaviour
             avatar.transform.localRotation = Quaternion.identity;
             var playerAvatar = avatar.GetComponent<PlayerAvatar>();
             currentAvatar = playerAvatar;
-
-            //if (HasStateAuthority)
-            //{
-            //    if (playerAvatar)
-            //    {
-            //        playerAvatar.SetFollowTarget(fusionPlayerController.transform);
-            //    }
-            //}
         }
     }
 

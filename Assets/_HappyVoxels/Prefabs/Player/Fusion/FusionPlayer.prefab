@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 883930510456708969}
   - component: {fileID: 1795283288489794767}
   m_Layer: 0
-  m_Name: Player
+  m_Name: FusionPlayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -49,10 +49,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   avatarPrefabs:
-  - {fileID: 2487744457468410609, guid: 54337e3e7779d7d43bf635dca1a818c0, type: 3}
+  - {fileID: 8728709425573856096, guid: 4883148d4f46b5841bea83733f7de137, type: 3}
+  - {fileID: 5279035057435729178, guid: d4a94a3c60acc44448f6e100ac0748be, type: 3}
+  - {fileID: 5929950486996694602, guid: 54337e3e7779d7d43bf635dca1a818c0, type: 3}
   - {fileID: 2487744457468410609, guid: 267a1ec23aa880845a8afed56dd64a03, type: 3}
-  - {fileID: 2487744457468410609, guid: 3c7cdb0b0ffc9aa48b2aea8f33a840ec, type: 3}
-  - {fileID: 2487744457468410609, guid: 4883148d4f46b5841bea83733f7de137, type: 3}
   defaultAvatarType: 0
   fusionPlayerController: {fileID: 430598257792962392}
 --- !u!114 &6706887045245592605
