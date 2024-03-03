@@ -46,14 +46,17 @@ public class FusionPlayerController : NetworkBehaviour
             return;
         }       
 
-        if (fusionPlayer && fusionPlayer.CurrentAvatar && fusionPlayer.LocalCameraController)
+        if (fusionPlayer && fusionPlayer.CurrentAvatar && fusionPlayer.LocalCamera)
         {
-            transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, fusionPlayer.LocalCameraController.transform.localEulerAngles.y, transform.localEulerAngles.z);
+            transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, fusionPlayer.LocalCamera.transform.localEulerAngles.y, transform.localEulerAngles.z);
         }
 
-        Vector3 move = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical")) * Runner.DeltaTime * playerSpeed;
+        if (GetInput(out NetworkInputData networkInputData))
+        {
+            Vector3 move = new Vector3(networkInputData.movementInput.x, 0, networkInputData.movementInput.y) * Runner.DeltaTime * playerSpeed;
+            characterController.Move(transform.TransformDirection(move));
+        }
 
-        characterController.Move(transform.TransformDirection(move));
         CheckRespawn();
     }
 

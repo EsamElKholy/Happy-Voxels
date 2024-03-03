@@ -11,7 +11,7 @@ public class RunnerCallback : MonoBehaviour, INetworkRunnerCallbacks
     public static Action<NetworkRunner> OnDisconnectedFromServerCallback;    
     public static Action<PlayerRef> OnPlayerJoinedSession;    
     public static Action<PlayerRef> OnPlayerLeftSession;
-
+    public static Action<NetworkRunner, NetworkInput> OnPlayerInput;
     public virtual void OnConnectedToServer(NetworkRunner runner)
     {
         Debug.LogWarning($"Fusion: RunnerCallbacks: OnConnectedToServer: {runner}");
@@ -46,6 +46,7 @@ public class RunnerCallback : MonoBehaviour, INetworkRunnerCallbacks
 
     public virtual void OnInput(NetworkRunner runner, NetworkInput input)
     {
+        OnPlayerInput?.Invoke(runner, input);
     }
 
     public virtual void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input)

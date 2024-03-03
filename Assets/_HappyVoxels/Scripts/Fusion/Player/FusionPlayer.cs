@@ -13,7 +13,14 @@ public class FusionPlayer : NetworkBehaviour
     private List<PlayerAvatar> avatarPrefabs = new();
 
     [SerializeField]
+    private CharacterInputHandler characterInputHandler;
+
+    [SerializeField]
     private FusionPlayerController fusionPlayerController;
+    [SerializeField]
+    private FusionGunController fusionGunController;
+    [SerializeField]
+    private FusionCameraController fusionCameraController;
 
     [SerializeField]
     private Camera cameraPrefab;
@@ -33,9 +40,11 @@ public class FusionPlayer : NetworkBehaviour
     private SpawnLocationManager spawnLocationManager;
     private AvatarType defaultAvatarType = AvatarType.Default;
     private GameObject gun;
-    
+    private Camera localCamera;
+
     public PlayerAvatar CurrentAvatar { get { return currentAvatar; } }
-    public LocalCameraController LocalCameraController { get; private set; }
+    public FusionCameraController FusionCameraController { get { return fusionCameraController; } }
+    public Camera LocalCamera { get { return localCamera; } }
 
     public override void Spawned()
     {
@@ -60,7 +69,9 @@ public class FusionPlayer : NetworkBehaviour
                 }
             }
 
+            characterInputHandler.Initialize();
             fusionPlayerController.Initialize();
+
             CurrentAvatarType = defaultAvatarType;
         }
         else
@@ -91,8 +102,9 @@ public class FusionPlayer : NetworkBehaviour
             currentAvatar = playerAvatar;
         }
 
-        if (HasStateAuthority && !LocalCameraController)
+        if (HasStateAuthority)
         {
+            currentAvatar.Initialize();
             InitializeCamera();
         }
 
@@ -104,18 +116,20 @@ public class FusionPlayer : NetworkBehaviour
 
     private void InitializeCamera() 
     {
-        Instantiate(cameraPrefab, transform);
+        localCamera = Instantiate(cameraPrefab, transform);
 
-        LocalCameraController = GetComponentInChildren<LocalCameraController>(true);
-        currentAvatar.GunSpawnLocation.SetParent(LocalCameraController.transform);
+        currentAvatar.GunSpawnLocation.SetParent(localCamera.transform);
 
-        LocalCameraController.gameObject.SetActive(true);
-        LocalCameraController.SetFollowTarget(transform);
+        localCamera.gameObject.SetActive(true);
+
+        fusionCameraController.Initialize(localCamera, transform);
     }
 
     private void SpawnGun() 
     {
         gun = Instantiate(gunPrefab, currentAvatar.GunSpawnLocation);
+
+        fusionGunController.Initialize(gun);
     }
 
     private void OnCurrentAvatarTypeChanged()

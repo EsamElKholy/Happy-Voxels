@@ -57,7 +57,7 @@ public class FusionPlayerManager : SimulationBehaviour
         {
             if (player == runner.LocalPlayer)
             {         
-                var obj = runner.Spawn(playerPrefab, onBeforeSpawned: (runner, obj) =>
+                var obj = runner.Spawn(playerPrefab, inputAuthority: player, onBeforeSpawned: (runner, obj) =>
                 {
                     var fusionPlayer = obj.GetComponent<FusionPlayer>();
                     spawnedPlayer.Add(player, fusionPlayer);
