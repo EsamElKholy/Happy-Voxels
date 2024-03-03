@@ -55,6 +55,7 @@ MonoBehaviour:
   - {fileID: 2487744457468410609, guid: 267a1ec23aa880845a8afed56dd64a03, type: 3}
   defaultAvatarType: 0
   fusionPlayerController: {fileID: 430598257792962392}
+  _PlayerIndex: -1
 --- !u!114 &6706887045245592605
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89,6 +90,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterController: {fileID: 883930510456708969}
   playerSpeed: 2
+  cameraSensitivity: {x: 30, y: 150}
 --- !u!143 &883930510456708969
 CharacterController:
   m_ObjectHideFlags: 0

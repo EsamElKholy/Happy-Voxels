@@ -61,8 +61,7 @@ public class FusionPlayerManager : SimulationBehaviour
         if (!spawnedPlayer.ContainsKey(player)) 
         {
             if (player == runner.LocalPlayer)
-            {               
-
+            {         
                 runner.Spawn(playerPrefab, onBeforeSpawned: (runner, obj) =>
                 {
                     var fusionPlayer = obj.GetComponent<FusionPlayer>();

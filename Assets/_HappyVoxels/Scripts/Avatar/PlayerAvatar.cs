@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
 public enum AvatarType
 {
     Default,
@@ -12,34 +13,36 @@ public enum AvatarType
 
 public class PlayerAvatar : MonoBehaviour
 {
+    private const string AVATAR_LAYER = "AvatarBody";
+
     [SerializeField] 
     private AvatarType avatarType;
 
-    //private FollowObject follow;
-
     public AvatarType AvatarType { get { return avatarType; } }
 
-    //private void Awake()
-    //{
-    //    Initialize();
-    //}
+    public LocalCameraController LocalCameraController { get; private set; }
 
-    //private void Initialize() 
-    //{
-    //    follow = GetComponent<FollowObject>();
+    public void Initialize() 
+    {
+        LocalCameraController = GetComponentInChildren<LocalCameraController>(true);
 
-    //}
+        SetGameLayerRecursive(gameObject, AVATAR_LAYER);
 
-    //public void SetFollowTarget(Transform target) 
-    //{
-    //    if (!follow)
-    //    {
-    //        Initialize();
-    //    }
+        LocalCameraController.gameObject.SetActive(true);
+        LocalCameraController.SetFollowTarget(transform.parent);
+    }
 
-    //    if (follow)
-    //    {
-    //        follow.SetTarget(target);
-    //    }
-    //}
+    private void SetGameLayerRecursive(GameObject obj, string layer)
+    {
+        obj.layer = LayerMask.NameToLayer(layer);
+        foreach (Transform child in obj.transform)
+        {
+            child.gameObject.layer = LayerMask.NameToLayer(layer);
+
+            Transform hasChildren = child.GetComponentInChildren<Transform>();
+            if (hasChildren != null)
+                SetGameLayerRecursive(child.gameObject, layer);
+
+        }
+    }
 }

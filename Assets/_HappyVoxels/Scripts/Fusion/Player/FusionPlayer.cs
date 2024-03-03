@@ -1,6 +1,8 @@
+using Cysharp.Threading.Tasks;
 using Fusion;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class FusionPlayer : NetworkBehaviour
 {  
@@ -13,31 +15,58 @@ public class FusionPlayer : NetworkBehaviour
 
     [Networked, OnChangedRender(nameof(OnCurrentAvatarTypeChanged))]
     private AvatarType CurrentAvatarType { get; set; } = AvatarType.NONE;
+
+    [Networked]
+    public int PlayerIndex { get; private set; } = -1;
    
     private PlayerAvatar currentAvatar;
+    private SpawnLocationManager spawnLocationManager;
     
+    public PlayerAvatar CurrentAvatar { get { return currentAvatar; } }
+
     public override void Spawned()
     {
         base.Spawned();
-               
+
         if (HasStateAuthority)
         {
+            PlayerIndex = Object.StateAuthority.AsIndex - 1;
 
+            Debug.LogError($"Player id {PlayerIndex}, State {HasStateAuthority}");
+
+            spawnLocationManager = FindFirstObjectByType<SpawnLocationManager>();
+
+            if (spawnLocationManager)
+            {
+                var spawnLocation = spawnLocationManager.GetSpawnLocation(PlayerIndex);
+
+                if (spawnLocation != null) 
+                {
+                    transform.position = spawnLocation.position;
+                    transform.rotation = spawnLocation.rotation;
+                }
+            }
+
+            fusionPlayerController.Initialize();
             CurrentAvatarType = defaultAvatarType;
+
+            Debug.LogError($"CurrentAvatarType: {CurrentAvatarType}, State {HasStateAuthority}");
         }
         else
         {
             ChangeAvatar(CurrentAvatarType);
+            Debug.LogError($"CurrentAvatarType: {CurrentAvatarType}, State {HasStateAuthority}");
+            Debug.LogError($"Player id {PlayerIndex}, State {HasStateAuthority}");
         }
-    }
-
-    public void MoveToSpawnLocation(Vector3 position) 
-    {
-        fusionPlayerController.Initialize(position);
     }
 
     public void ChangeAvatar(AvatarType avatarType) 
     {
+        if (avatarType == AvatarType.NONE)
+        {
+            return;
+        }
+
         int index = avatarPrefabs.FindIndex(x => x.GetComponent<PlayerAvatar>().AvatarType == avatarType);
         if (index != -1)
         {
@@ -48,10 +77,13 @@ public class FusionPlayer : NetworkBehaviour
 
             var avatar = Instantiate(avatarPrefabs[index], transform);
 
-            avatar.transform.localPosition = Vector3.zero;
-            avatar.transform.localRotation = Quaternion.identity;
             var playerAvatar = avatar.GetComponent<PlayerAvatar>();
             currentAvatar = playerAvatar;
+        }
+
+        if (HasStateAuthority)
+        {
+            currentAvatar.Initialize();
         }
     }
 
