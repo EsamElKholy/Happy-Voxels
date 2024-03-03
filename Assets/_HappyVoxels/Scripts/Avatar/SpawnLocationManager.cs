@@ -11,7 +11,7 @@ public class SpawnLocationManager : MonoBehaviour
     {
         if (spawnLocations.Count <= index || index < 0) 
         {
-            return null;
+            index = index < 0 ? 0 : index % spawnLocations.Count;
         }
 
         return spawnLocations[index];

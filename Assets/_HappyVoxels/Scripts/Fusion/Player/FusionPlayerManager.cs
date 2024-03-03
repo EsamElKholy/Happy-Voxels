@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using Fusion;
 using System;
 using System.Collections;
@@ -12,13 +13,7 @@ public class FusionPlayerManager : SimulationBehaviour
     [SerializeField]
     private NetworkPrefabRef playerPrefab;
 
-    [SerializeField]
-    private List<Transform> playerSpawnLocations = new();
-
     private Dictionary<PlayerRef, FusionPlayer> spawnedPlayer = new();
-
-    public static Action<FusionPlayer> OnPlayerJoined;
-    public static Action<FusionPlayer> OnPlayerLeft;
 
     private void Awake()
     {
@@ -62,26 +57,70 @@ public class FusionPlayerManager : SimulationBehaviour
         {
             if (player == runner.LocalPlayer)
             {         
-                runner.Spawn(playerPrefab, onBeforeSpawned: (runner, obj) =>
+                var obj = runner.Spawn(playerPrefab, onBeforeSpawned: (runner, obj) =>
                 {
                     var fusionPlayer = obj.GetComponent<FusionPlayer>();
-
                     spawnedPlayer.Add(player, fusionPlayer);
-
-                    OnPlayerJoined?.Invoke(fusionPlayer);
                 });
             }
+            else
+            {
+                WaitForSpawnToCache(player).Forget();
+            }
         }
+
+        Debug.LogError($"Cached players {spawnedPlayer.Count}");
+    }
+
+    private async UniTask WaitForSpawnToCache(PlayerRef player) 
+    {
+        bool found = false;
+        while (!found) 
+        {
+            var players = FindObjectsByType<FusionPlayer>(sortMode: FindObjectsSortMode.None);
+
+            foreach (var p in players)
+            {
+                if (p.Object.StateAuthority == player)
+                {
+                    spawnedPlayer.Add(player, p);
+                    found = true;
+                    break;
+                }
+            }
+
+            await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: this.GetCancellationTokenOnDestroy());
+        }
+
+        Debug.LogError($"Cached players {spawnedPlayer.Count}");
     }
 
     private void PlayerLeft(PlayerRef player) 
     {
-        if (spawnedPlayer.ContainsKey(player))
+        if (player == runner.LocalPlayer) 
         {
-            var fusionPlayer = spawnedPlayer[player];
+            if (spawnedPlayer.ContainsKey(player))
+            {
+                var fusionPlayer = spawnedPlayer[player];
+                spawnedPlayer.Remove(player);
 
-            OnPlayerLeft?.Invoke(fusionPlayer);
-            runner.Despawn(fusionPlayer.Object);            
+                if (fusionPlayer)
+                {
+                    if (fusionPlayer.Object)
+                    {
+                        runner.Despawn(fusionPlayer.Object);
+                    }
+                }
+            }
         }
+        else
+        {
+            if (spawnedPlayer.ContainsKey(player))
+            {
+                spawnedPlayer.Remove(player);
+            }
+        }
+
+        Debug.LogError($"Cached players {spawnedPlayer.Count}");
     }
 }

@@ -1,28 +1,41 @@
 using Cysharp.Threading.Tasks;
 using Fusion;
+using NaughtyAttributes;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 public class FusionPlayer : NetworkBehaviour
-{  
+{
+    #region SerializedFields
     [SerializeField]
     private List<PlayerAvatar> avatarPrefabs = new();
-    [SerializeField]
-    private AvatarType defaultAvatarType;
+
     [SerializeField]
     private FusionPlayerController fusionPlayerController;
 
-    [Networked, OnChangedRender(nameof(OnCurrentAvatarTypeChanged))]
-    private AvatarType CurrentAvatarType { get; set; } = AvatarType.NONE;
+    [SerializeField]
+    private Camera cameraPrefab;
+    [SerializeField]
+    private GameObject gunPrefab;
+    #endregion
 
-    [Networked]
-    public int PlayerIndex { get; private set; } = -1;
+    #region NetworkedProperties
+    [HideInInspector]
+    [Networked, OnChangedRender(nameof(OnCurrentAvatarTypeChanged))]
+    public AvatarType CurrentAvatarType { get; private set; } = AvatarType.NONE;
+    #endregion
    
+    
+    public int PlayerIndex { get; private set; } = -1;   
     private PlayerAvatar currentAvatar;
     private SpawnLocationManager spawnLocationManager;
+    private AvatarType defaultAvatarType = AvatarType.Default;
+    private GameObject gun;
     
     public PlayerAvatar CurrentAvatar { get { return currentAvatar; } }
+    public LocalCameraController LocalCameraController { get; private set; }
 
     public override void Spawned()
     {
@@ -49,14 +62,10 @@ public class FusionPlayer : NetworkBehaviour
 
             fusionPlayerController.Initialize();
             CurrentAvatarType = defaultAvatarType;
-
-            Debug.LogError($"CurrentAvatarType: {CurrentAvatarType}, State {HasStateAuthority}");
         }
         else
         {
             ChangeAvatar(CurrentAvatarType);
-            Debug.LogError($"CurrentAvatarType: {CurrentAvatarType}, State {HasStateAuthority}");
-            Debug.LogError($"Player id {PlayerIndex}, State {HasStateAuthority}");
         }
     }
 
@@ -68,6 +77,7 @@ public class FusionPlayer : NetworkBehaviour
         }
 
         int index = avatarPrefabs.FindIndex(x => x.GetComponent<PlayerAvatar>().AvatarType == avatarType);
+        Quaternion currentCameraRotation = Quaternion.identity;
         if (index != -1)
         {
             if (currentAvatar)
@@ -81,30 +91,56 @@ public class FusionPlayer : NetworkBehaviour
             currentAvatar = playerAvatar;
         }
 
-        if (HasStateAuthority)
+        if (HasStateAuthority && !LocalCameraController)
         {
-            currentAvatar.Initialize();
+            InitializeCamera();
+        }
+
+        if (!gun)
+        {
+            SpawnGun();
         }
     }
 
-#if UNITY_EDITOR
-    private void OnGUI()
+    private void InitializeCamera() 
     {
-        if (Object && Object.IsValid && CurrentAvatarType != defaultAvatarType)
-        {
-            RPC_ChangeAvatar(defaultAvatarType);
-        }
-    }
-#endif
+        Instantiate(cameraPrefab, transform);
 
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_ChangeAvatar(AvatarType avatarType) 
+        LocalCameraController = GetComponentInChildren<LocalCameraController>(true);
+        currentAvatar.GunSpawnLocation.SetParent(LocalCameraController.transform);
+
+        LocalCameraController.gameObject.SetActive(true);
+        LocalCameraController.SetFollowTarget(transform);
+    }
+
+    private void SpawnGun() 
     {
-        CurrentAvatarType = avatarType;
+        gun = Instantiate(gunPrefab, currentAvatar.GunSpawnLocation);
     }
 
     private void OnCurrentAvatarTypeChanged()
     {
         ChangeAvatar(CurrentAvatarType);
     }
+
+    #region RPC
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_ChangeAvatar(AvatarType avatarType) 
+    {
+        defaultAvatarType = avatarType;
+        CurrentAvatarType = defaultAvatarType;
+    }
+    #endregion      
+
+#if UNITY_EDITOR
+    public void Debug_ChangeDefaultAvatarType(AvatarType avatarType)
+    {
+        defaultAvatarType = avatarType;
+
+        if (Object && Object.IsValid && CurrentAvatarType != defaultAvatarType)
+        {
+            RPC_ChangeAvatar(defaultAvatarType);
+        }
+    }
+#endif
 }

@@ -17,19 +17,15 @@ public class PlayerAvatar : MonoBehaviour
 
     [SerializeField] 
     private AvatarType avatarType;
+    [SerializeField]
+    private Transform gunSpawnLocation;
 
-    public AvatarType AvatarType { get { return avatarType; } }
-
-    public LocalCameraController LocalCameraController { get; private set; }
+    public AvatarType AvatarType { get { return avatarType; } }   
+    public Transform GunSpawnLocation { get { return gunSpawnLocation; } }
 
     public void Initialize() 
-    {
-        LocalCameraController = GetComponentInChildren<LocalCameraController>(true);
-
+    {       
         SetGameLayerRecursive(gameObject, AVATAR_LAYER);
-
-        LocalCameraController.gameObject.SetActive(true);
-        LocalCameraController.SetFollowTarget(transform.parent);
     }
 
     private void SetGameLayerRecursive(GameObject obj, string layer)

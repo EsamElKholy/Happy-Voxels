@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using static Unity.Collections.Unicode;
 
 public class LocalCameraController : MonoBehaviour
 {
@@ -21,37 +20,10 @@ public class LocalCameraController : MonoBehaviour
     public void SetFollowTarget(Transform target) 
     {
         followTarget = target;
-    }
 
-    // Start is called before the first frame update
-    void Start()
-    {
         if (localCamera)
         {
             localCamera.transform.parent = null;
-        }
-
-        Application.focusChanged += FocusChanged;
-    }
-
-    private void FocusChanged(bool state)
-    {
-        if (state)
-        {
-            if (!localCamera || !localCamera.gameObject.activeSelf)
-            {
-                return;
-            }
-
-            if (!followTarget)
-            {
-                return;
-            }
-
-            cameraRotation = Vector2.zero;
-            localCamera.transform.rotation = Quaternion.identity;
-
-            followTarget.transform.rotation = Quaternion.identity;
         }
     }
 

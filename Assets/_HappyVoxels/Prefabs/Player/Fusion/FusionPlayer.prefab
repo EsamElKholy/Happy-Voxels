@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 430598257792962392}
   - component: {fileID: 883930510456708969}
   - component: {fileID: 1795283288489794767}
+  - component: {fileID: 5296564244836108148}
   m_Layer: 0
   m_Name: FusionPlayer
   m_TagString: Untagged
@@ -53,9 +54,12 @@ MonoBehaviour:
   - {fileID: 5279035057435729178, guid: d4a94a3c60acc44448f6e100ac0748be, type: 3}
   - {fileID: 5929950486996694602, guid: 54337e3e7779d7d43bf635dca1a818c0, type: 3}
   - {fileID: 2487744457468410609, guid: 267a1ec23aa880845a8afed56dd64a03, type: 3}
-  defaultAvatarType: 0
   fusionPlayerController: {fileID: 430598257792962392}
-  _PlayerIndex: -1
+  cameraPrefab: {fileID: 8685197645584643016, guid: e69903868cddff94b9252bc6cd74b77e,
+    type: 3}
+  gunPrefab: {fileID: 5291420613801907394, guid: 966ce1cfc84f1b9448e9525ca04dce05,
+    type: 3}
+  _CurrentAvatarType: 2
 --- !u!114 &6706887045245592605
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -90,7 +94,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterController: {fileID: 883930510456708969}
   playerSpeed: 2
-  cameraSensitivity: {x: 30, y: 150}
+  respawnHeight: -10
 --- !u!143 &883930510456708969
 CharacterController:
   m_ObjectHideFlags: 0
@@ -133,3 +137,17 @@ MonoBehaviour:
   SyncParent: 0
   _autoAOIOverride: 1
   DisableSharedModeInterpolation: 0
+--- !u!114 &5296564244836108148
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7491462185953015827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd22deed675f13240a6dc05bf4c030df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fusionPlayer: {fileID: 7986811964992055209}
+  avatarType: 0
