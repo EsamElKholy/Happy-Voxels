@@ -8,15 +8,12 @@ using UnityEngine;
 
 public class FusionGunController : NetworkBehaviour
 {
-    private bool wasFiring = false;
-
     private GameObject gun;
     private ParticleSystem fireParticles;
     private bool isInitialized = false;
     private bool underCooldown = false;
     private float cooldownDuration = 0.15f;
     private float cooldownTimer = 0;
-    private float lastTimeFired = 0;
 
     public override void Spawned()
     {

@@ -1,0 +1,626 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel FillTree
+#pragma kernel ConstructMesh
+#pragma kernel ConstructMesh1
+#pragma kernel GetFilledVoxels
+#pragma kernel BuildTree
+#pragma kernel DisableVoxelsInSphere
+#pragma kernel EnableVoxelsInSphere
+
+#include "UnityCG.cginc"
+
+CBUFFER_START(VoxelData)
+int IndexCount;
+int VoxelCount;
+int MaxDepth;
+float MaxSize;
+float3 SpherecastOrigin;
+float SphereRadius;
+CBUFFER_END
+
+struct VoxelOctreeNode 
+{
+	int Index;
+	int CurrentDepth;
+	int FirstChild;
+	int Parent;
+	int FirstLeaf;
+	int LastLeaf;
+	float3 Position;
+	float Size;
+	int Value;
+};
+
+RWStructuredBuffer<VoxelOctreeNode> VoxelOctreeBuffer;
+
+RWStructuredBuffer<float3> VertexBuffer;
+RWStructuredBuffer<int> IndexBuffer;
+
+RWStructuredBuffer<float3> OutVerticesBuffer;
+RWStructuredBuffer<int> OutIndicesBuffer;
+
+AppendStructuredBuffer<VoxelOctreeNode> FilledVoxelPositionsBuffer;
+
+RWStructuredBuffer<VoxelOctreeNode> _FilledVoxelPositionsBuffer;
+int FilledVoxelsCount;
+
+float2 GetBoxInterval(float3 boxCenter, float3 boxSize, float3 axis)
+{
+	float2 interval;
+
+	float3 p1 = boxCenter - boxSize / 2.0;
+	float3 p2 = boxCenter + boxSize / 2.0;
+
+	float3 minP = p1;//float3(min(p1.x, p2.x), min(p1.y, p2.y), min(p1.z, p2.z));
+	float3 maxP = p2;//float3(max(p1.x, p2.x), max(p1.y, p2.y), max(p1.z, p2.z));
+
+	float3 v0 = float3(minP.x, maxP.y, maxP.z);
+	float3 v1 = float3(minP.x, maxP.y, minP.z);
+	float3 v2 = float3(minP.x, minP.y, maxP.z);
+	float3 v3 = float3(minP.x, minP.y, minP.z);
+	float3 v4 = float3(maxP.x, maxP.y, maxP.z);
+	float3 v5 = float3(maxP.x, maxP.y, minP.z);
+	float3 v6 = float3(maxP.x, minP.y, maxP.z);
+	float3 v7 = float3(maxP.x, minP.y, minP.z);
+
+	float mn = 99999999;
+	float mx = -99999999;
+
+	float projection = dot(axis, v0);
+
+	mn = min(mn, projection);
+	mx = max(mx, projection);
+
+	projection = dot(axis, v1);
+
+	mn = min(mn, projection);
+	mx = max(mx, projection);
+
+	projection = dot(axis, v2);
+
+	mn = min(mn, projection);
+	mx = max(mx, projection);
+
+	projection = dot(axis, v3);
+
+	mn = min(mn, projection);
+	mx = max(mx, projection);
+
+	projection = dot(axis, v4);
+
+	mn = min(mn, projection);
+	mx = max(mx, projection);
+
+	projection = dot(axis, v5);
+
+	mn = min(mn, projection);
+	mx = max(mx, projection);
+
+	projection = dot(axis, v6);
+
+	mn = min(mn, projection);
+	mx = max(mx, projection);
+
+	projection = dot(axis, v7);
+
+	mn = min(mn, projection);
+	mx = max(mx, projection);
+
+	interval.x = mn;
+	interval.y = mx;
+
+	return interval;
+}
+
+float2 GetTriangleInterval(float3 tri0, float3 tri1, float3 tri2, float3 axis)
+{
+	float2 interval;
+
+	float mn = 999999999;
+	float mx = -999999999;
+
+	float projection = dot(tri0, axis);
+
+	mn = min(mn, projection);
+	mx = max(mx, projection);
+
+	projection = dot(tri1, axis);
+
+	mn = min(mn, projection);
+	mx = max(mx, projection);
+
+	projection = dot(tri2, axis);
+
+	mn = min(mn, projection);
+	mx = max(mx, projection);
+
+	interval.x = mn;
+	interval.y = mx;
+
+	return interval;
+}
+
+int OverlapAxis(float3 tri0, float3 tri1, float3 tri2, float3 boxCenter, float3 boxSize, float3 axis)
+{
+	float2 a = GetBoxInterval(boxCenter, boxSize, axis);
+	float2 b = GetTriangleInterval(tri0, tri1, tri2, axis);
+
+	if (((b.x <= a.y) && (a.x <= b.y)))
+	{
+		return 1;
+	}
+	return 0;
+}
+
+int TriangleBoxIntersection(float3 tri0, float3 tri1, float3 tri2, float3 boxCenter, float3 boxSize)
+{
+	float3 triangleEdge0 = tri1 - tri0;
+	float3 triangleEdge1 = tri2 - tri1;
+	float3 triangleEdge2 = tri0 - tri2;
+
+	float3 boxNormal0 = float3(1, 0, 0);
+	float3 boxNormal1 = float3(0, 1, 0);
+	float3 boxNormal2 = float3(0, 0, 1);
+
+	float3 triangleNormal = cross(triangleEdge0, triangleEdge1);
+
+	float3 a0 = float3(0, -triangleEdge0.z, triangleEdge0.y);
+	float3 a1 = float3(0, -triangleEdge1.z, triangleEdge1.y);
+	float3 a2 = float3(0, -triangleEdge2.z, triangleEdge2.y);
+	float3 a3 = float3(triangleEdge0.z, 0, -triangleEdge0.x);
+	float3 a4 = float3(triangleEdge1.z, 0, -triangleEdge1.x);
+	float3 a5 = float3(triangleEdge2.z, 0, -triangleEdge2.x);
+	float3 a6 = float3(-triangleEdge0.y, triangleEdge0.x, 0);
+	float3 a7 = float3(-triangleEdge1.y, triangleEdge1.x, 0);
+	float3 a8 = float3(-triangleEdge2.y, triangleEdge2.x, 0);
+
+	if (OverlapAxis(tri0, tri1, tri2, boxCenter, boxSize, boxNormal0) == 0 ||
+		OverlapAxis(tri0, tri1, tri2, boxCenter, boxSize, boxNormal1) == 0 ||
+		OverlapAxis(tri0, tri1, tri2, boxCenter, boxSize, boxNormal2) == 0 ||
+		OverlapAxis(tri0, tri1, tri2, boxCenter, boxSize, triangleNormal) == 0 ||
+		OverlapAxis(tri0, tri1, tri2, boxCenter, boxSize, a0) == 0 ||
+		OverlapAxis(tri0, tri1, tri2, boxCenter, boxSize, a1) == 0 ||
+		OverlapAxis(tri0, tri1, tri2, boxCenter, boxSize, a2) == 0 ||
+		OverlapAxis(tri0, tri1, tri2, boxCenter, boxSize, a3) == 0 ||
+		OverlapAxis(tri0, tri1, tri2, boxCenter, boxSize, a4) == 0 ||
+		OverlapAxis(tri0, tri1, tri2, boxCenter, boxSize, a5) == 0 ||
+		OverlapAxis(tri0, tri1, tri2, boxCenter, boxSize, a6) == 0 ||
+		OverlapAxis(tri0, tri1, tri2, boxCenter, boxSize, a7) == 0 ||
+		OverlapAxis(tri0, tri1, tri2, boxCenter, boxSize, a8) == 0)
+	{
+		return 0;
+	}
+
+	return 1;
+}
+
+[numthreads(64, 1, 1)]
+void BuildTree(uint3 id : SV_DispatchThreadID)
+{
+	if (id.x == 0 || id.x >= VoxelCount)
+	{
+		return;
+	}
+
+	int a = 1;
+	int b = 0;
+	uint index = id.x;
+	int currentDepth = 0;
+	for (int j = 1; j <= MaxDepth; j++)
+	{
+		a += (int)pow(8, j);
+		b += (int)pow(8, j - 1);
+
+		if (index >= b && index < a)
+		{
+			currentDepth = j;
+			break;
+		}
+	}
+
+	int range = (int)pow(8, currentDepth);
+
+	VoxelOctreeNode node;
+	node.Index = index;
+	node.Parent = (index - 1) / 8;
+	node.CurrentDepth = currentDepth;
+
+	if (currentDepth == MaxDepth)
+	{
+		node.FirstChild = -1;
+		node.FirstLeaf = -1;
+		node.LastLeaf = -1;
+	}
+	else
+	{
+		int previousIndex = 0;
+
+		previousIndex = 0;
+		int s = 0;
+		int k = 0;
+		for (k = 0; k < currentDepth; k++)
+		{
+			s += (int)pow(8, k);
+		}
+		previousIndex = s;
+
+		node.FirstChild = range + 1 + ((index - previousIndex) * 8);
+		int stride = (int)pow(8, MaxDepth - currentDepth);
+		node.FirstLeaf = 0;
+		int sum = 0;
+		for (k = 0; k <= MaxDepth - 1; k++)
+		{
+			sum += (int)pow(8, k);
+		}
+		sum += (index - previousIndex) * (int)pow(8, MaxDepth - currentDepth);
+		node.FirstLeaf = sum;
+		node.LastLeaf = node.FirstLeaf + stride - 1;
+	}
+
+	int current = 0;
+	int tempNodes[9];
+	float3 tempNodesP[9];
+	int i = 0;
+	for (i = 0; i < 9; i++)
+	{
+		tempNodes[i] = 0;
+		tempNodesP[i] = VoxelOctreeBuffer[0].Position;
+	}
+
+	uint parentIndex = node.Parent;
+
+	while (parentIndex >= 0)
+	{
+		if (parentIndex != 0)
+		{
+			tempNodes[current] = parentIndex;		
+			tempNodesP[current] = VoxelOctreeBuffer[0].Position;
+			current++;
+		}
+		else
+		{
+			break;
+		}
+
+		parentIndex = (parentIndex - 1) / 8;
+	}
+	current--;
+	
+	int max = current;
+	while (current >= 0)
+	{		
+		int a1 = 1;
+		int b1 = 0;
+		uint currentIndex = tempNodes[current];
+		uint tempCurrentDepth = 0;
+		int j = 0;
+		for (j = 1; j <= MaxDepth; j++)
+		{
+			a1 += (int)pow(8, j);
+			b1 += (int)pow(8, j - 1);
+
+			if (currentIndex >= b1 && currentIndex < a1)
+			{
+				tempCurrentDepth = j;
+				break;
+			}
+		}
+
+		if (current == max)
+		{
+			tempNodesP[current] = VoxelOctreeBuffer[0].Position;
+		}
+		else
+		{
+			tempNodesP[current] = tempNodesP[current + 1];
+		}
+		float size = MaxSize / pow(2, tempCurrentDepth);
+
+		if (((currentIndex % 8) & 4) == 4)
+		{
+			tempNodesP[current].y += (size / 2);
+		}
+		else
+		{
+			tempNodesP[current].y -= (size / 2);
+		}
+
+		if (((currentIndex % 8) & 2) == 2)
+		{
+			tempNodesP[current].x += (size / 2);
+		}
+		else
+		{
+			tempNodesP[current].x -= (size / 2);
+		}
+
+		if (((currentIndex % 8) & 1) == 1)
+		{
+			tempNodesP[current].z += (size / 2);
+		}
+		else
+		{
+			tempNodesP[current].z -= (size / 2);
+		}
+
+		current--;
+	}
+
+	int p = 0;
+	for (i = 0; i < max; i++)
+	{
+		if (node.Parent == tempNodes[i])
+		{
+			p = i;
+			break;
+		}
+	}
+
+	node.Size = MaxSize / pow(2, currentDepth);
+	node.Position = tempNodesP[p];
+
+	if (((index % 8) & 4) == 4)
+	{
+		node.Position.y += (node.Size / 2);
+	}
+	else
+	{
+		node.Position.y -= (node.Size / 2);
+	}
+
+	if (((index % 8) & 2) == 2)
+	{
+		node.Position.x += (node.Size / 2);
+	}
+	else
+	{
+		node.Position.x -= (node.Size / 2);
+	}
+
+	if (((index % 8) & 1) == 1)
+	{
+		node.Position.z += (node.Size / 2);
+	}
+	else
+	{
+		node.Position.z -= (node.Size / 2);
+	}
+
+	node.Value = 0;
+
+	VoxelOctreeBuffer[index] = (node);
+}
+
+[numthreads(64, 1, 1)]
+void FillTree(uint3 id : SV_DispatchThreadID) 
+{
+	if (id.x >= IndexCount / 3)
+	{
+		return;
+	}
+
+	int index = id.x * 3;
+	int i0 = IndexBuffer[index + 0];
+	int i1 = IndexBuffer[index + 1];
+	int i2 = IndexBuffer[index + 2];
+
+	float3 v0 = VertexBuffer[i0];
+	float3 v1 = VertexBuffer[i1];
+	float3 v2 = VertexBuffer[i2];
+
+	int min = 0;
+	int i = 0;
+	for (i = 0; i <= MaxDepth - 1; i++)
+	{
+		min += (int)pow(8, i);
+	}
+
+	for (i = min; i < VoxelCount;)
+	{
+		int parentIndex = VoxelOctreeBuffer[i].Parent;
+		int lastSkip = 0;
+		while (parentIndex >= 0)
+		{
+			int intersecting = TriangleBoxIntersection(v0, v1, v2, VoxelOctreeBuffer[parentIndex].Position, float3(VoxelOctreeBuffer[parentIndex].Size, VoxelOctreeBuffer[parentIndex].Size, VoxelOctreeBuffer[parentIndex].Size));
+
+			if (intersecting == 1)
+			{
+				break;
+			}
+			else
+			{
+				lastSkip = VoxelOctreeBuffer[parentIndex].LastLeaf;
+				parentIndex = VoxelOctreeBuffer[parentIndex].Parent;
+			}
+		}
+
+		if (lastSkip == 0)
+		{
+			for (int j = i; j < i + 8; j++)
+			{
+				int intersecting = TriangleBoxIntersection(v0, v1, v2, VoxelOctreeBuffer[j].Position, float3(VoxelOctreeBuffer[j].Size, VoxelOctreeBuffer[j].Size, VoxelOctreeBuffer[j].Size));
+
+				if (intersecting == 1)
+				{
+					VoxelOctreeBuffer[j].Value = 1;
+				}
+			}
+
+			i += 8;
+		}
+		else
+		{
+			i = lastSkip + 1;
+		}
+	}
+}
+
+[numthreads(64, 1, 1)]
+void GetFilledVoxels(uint3 id : SV_DispatchThreadID) 
+{
+	if (id.x >= VoxelCount)
+	{
+		return;
+	}
+
+	if (VoxelOctreeBuffer[id.x].Value == 1)
+	{
+		FilledVoxelPositionsBuffer.Append(VoxelOctreeBuffer[id.x]);
+	}
+}
+
+[numthreads(64, 1, 1)]
+void DisableVoxelsInSphere(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= FilledVoxelsCount)
+    {
+        return;
+    }
+
+    if (_FilledVoxelPositionsBuffer[id.x].Value == 1)
+    {
+        if (length(_FilledVoxelPositionsBuffer[id.x].Position - SpherecastOrigin) <= SphereRadius + _FilledVoxelPositionsBuffer[id.x].Size / 2)
+        {
+            VoxelOctreeBuffer[_FilledVoxelPositionsBuffer[id.x].Index].Value = 0;
+        }
+    }
+}
+
+[numthreads(64, 1, 1)]
+void EnableVoxelsInSphere(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= VoxelCount)
+    {
+        return;
+    }
+
+    if (VoxelOctreeBuffer[id.x].FirstChild == -1 && 
+        length(VoxelOctreeBuffer[id.x].Position - SpherecastOrigin) <= SphereRadius + VoxelOctreeBuffer[id.x].Size / 2)
+    {
+        VoxelOctreeBuffer[id.x].Value = 1;
+    }
+}
+
+[numthreads(64, 1, 1)]
+void ConstructMesh(uint3 id : SV_DispatchThreadID)
+{
+	if (id.x >= FilledVoxelsCount)
+	{
+		return;
+	}
+
+	int count = id.x;
+
+	float3 pos = _FilledVoxelPositionsBuffer[count].Position;
+	float3 size = _FilledVoxelPositionsBuffer[count].Size * float3(1, 1, 1);
+
+	// Face: UP             
+	OutVerticesBuffer[0 + 24 * count] = (float3(pos.x - (size.x / 2.0f), pos.y + (size.y / 2.0f), pos.z + (size.z / 2.0f)));
+	OutVerticesBuffer[1 + 24 * count] = (float3(pos.x + (size.x / 2.0f), pos.y + (size.y / 2.0f), pos.z + (size.z / 2.0f)));
+	OutVerticesBuffer[2 + 24 * count] = (float3(pos.x + (size.x / 2.0f), pos.y + (size.y / 2.0f), pos.z - (size.z / 2.0f)));
+	OutVerticesBuffer[3 + 24 * count] = (float3(pos.x - (size.x / 2.0f), pos.y + (size.y / 2.0f), pos.z - (size.z / 2.0f)));
+
+	// Face: DOWN                                                                                      
+	OutVerticesBuffer[4 + 24 * count] = (float3(pos.x - (size.x / 2.0f), pos.y - (size.y / 2.0f), pos.z + (size.z / 2.0f)));
+	OutVerticesBuffer[5 + 24 * count] = (float3(pos.x + (size.x / 2.0f), pos.y - (size.y / 2.0f), pos.z + (size.z / 2.0f)));
+	OutVerticesBuffer[6 + 24 * count] = (float3(pos.x + (size.x / 2.0f), pos.y - (size.y / 2.0f), pos.z - (size.z / 2.0f)));
+	OutVerticesBuffer[7 + 24 * count] = (float3(pos.x - (size.x / 2.0f), pos.y - (size.y / 2.0f), pos.z - (size.z / 2.0f)));
+
+	// Face: BACK                                                                                      
+	OutVerticesBuffer[8 + 24 * count] = (float3(pos.x - (size.x / 2.0f), pos.y - (size.y / 2.0f), pos.z - (size.z / 2.0f)));
+	OutVerticesBuffer[9 + 24 * count] = (float3(pos.x + (size.x / 2.0f), pos.y - (size.y / 2.0f), pos.z - (size.z / 2.0f)));
+	OutVerticesBuffer[10 + 24 * count] = (float3(pos.x + (size.x / 2.0f), pos.y + (size.y / 2.0f), pos.z - (size.z / 2.0f)));
+	OutVerticesBuffer[11 + 24 * count] = (float3(pos.x - (size.x / 2.0f), pos.y + (size.y / 2.0f), pos.z - (size.z / 2.0f)));
+
+	// Face: FRONT                                                                                     
+	OutVerticesBuffer[12 + 24 * count] = (float3(pos.x - (size.x / 2.0f), pos.y - (size.y / 2.0f), pos.z + (size.z / 2.0f)));
+	OutVerticesBuffer[13 + 24 * count] = (float3(pos.x + (size.x / 2.0f), pos.y - (size.y / 2.0f), pos.z + (size.z / 2.0f)));
+	OutVerticesBuffer[14 + 24 * count] = (float3(pos.x + (size.x / 2.0f), pos.y + (size.y / 2.0f), pos.z + (size.z / 2.0f)));
+	OutVerticesBuffer[15 + 24 * count] = (float3(pos.x - (size.x / 2.0f), pos.y + (size.y / 2.0f), pos.z + (size.z / 2.0f)));
+
+	// Face: LEFT                                                                                      
+	OutVerticesBuffer[16 + 24 * count] = (float3(pos.x - (size.x / 2.0f), pos.y - (size.y / 2.0f), pos.z + (size.z / 2.0f)));
+	OutVerticesBuffer[17 + 24 * count] = (float3(pos.x - (size.x / 2.0f), pos.y - (size.y / 2.0f), pos.z - (size.z / 2.0f)));
+	OutVerticesBuffer[18 + 24 * count] = (float3(pos.x - (size.x / 2.0f), pos.y + (size.y / 2.0f), pos.z - (size.z / 2.0f)));
+	OutVerticesBuffer[19 + 24 * count] = (float3(pos.x - (size.x / 2.0f), pos.y + (size.y / 2.0f), pos.z + (size.z / 2.0f)));
+
+	// Face: RIGHT                                                                                    
+	OutVerticesBuffer[20 + 24 * count] = (float3(pos.x + (size.x / 2.0f), pos.y - (size.y / 2.0f), pos.z + (size.z / 2.0f)));
+	OutVerticesBuffer[21 + 24 * count] = (float3(pos.x + (size.x / 2.0f), pos.y - (size.y / 2.0f), pos.z - (size.z / 2.0f)));
+	OutVerticesBuffer[22 + 24 * count] = (float3(pos.x + (size.x / 2.0f), pos.y + (size.y / 2.0f), pos.z - (size.z / 2.0f)));
+	OutVerticesBuffer[23 + 24 * count] = (float3(pos.x + (size.x / 2.0f), pos.y + (size.y / 2.0f), pos.z + (size.z / 2.0f)));
+
+	//Up
+	OutIndicesBuffer[0 + 36 * count] = ((0 + (4 * 0)) + (24 * (count)));
+	OutIndicesBuffer[1 + 36 * count] = ((1 + (4 * 0)) + (24 * (count)));
+	OutIndicesBuffer[2 + 36 * count] = ((2 + (4 * 0)) + (24 * (count)));
+
+	OutIndicesBuffer[3 + 36 * count] = ((0 + (4 * 0)) + (24 * (count)));
+	OutIndicesBuffer[4 + 36 * count] = ((2 + (4 * 0)) + (24 * (count)));
+	OutIndicesBuffer[5 + 36 * count] = ((3 + (4 * 0)) + (24 * (count)));
+
+	//Down                          
+	OutIndicesBuffer[6 + 36 * count] = ((2 + (4 * 1)) + (24 * (count)));
+	OutIndicesBuffer[7 + 36 * count] = ((1 + (4 * 1)) + (24 * (count)));
+	OutIndicesBuffer[8 + 36 * count] = ((0 + (4 * 1)) + (24 * (count)));
+
+	OutIndicesBuffer[9 + 36 * count] = ((3 + (4 * 1)) + (24 * (count)));
+	OutIndicesBuffer[10 + 36 * count] = ((2 + (4 * 1)) + (24 * (count)));
+	OutIndicesBuffer[11 + 36 * count] = ((0 + (4 * 1)) + (24 * (count)));
+
+	//Back                        
+	OutIndicesBuffer[12 + 36 * count] = ((2 + (4 * 2)) + (24 * (count)));
+	OutIndicesBuffer[13 + 36 * count] = ((1 + (4 * 2)) + (24 * (count)));
+	OutIndicesBuffer[14 + 36 * count] = ((0 + (4 * 2)) + (24 * (count)));
+
+	OutIndicesBuffer[15 + 36 * count] = ((3 + (4 * 2)) + (24 * (count)));
+	OutIndicesBuffer[16 + 36 * count] = ((2 + (4 * 2)) + (24 * (count)));
+	OutIndicesBuffer[17 + 36 * count] = ((0 + (4 * 2)) + (24 * (count)));
+
+	//Front                       
+	OutIndicesBuffer[18 + 36 * count] = ((0 + (4 * 3)) + (24 * (count)));
+	OutIndicesBuffer[19 + 36 * count] = ((1 + (4 * 3)) + (24 * (count)));
+	OutIndicesBuffer[20 + 36 * count] = ((2 + (4 * 3)) + (24 * (count)));
+
+	OutIndicesBuffer[21 + 36 * count] = ((0 + (4 * 3)) + (24 * (count)));
+	OutIndicesBuffer[22 + 36 * count] = ((2 + (4 * 3)) + (24 * (count)));
+	OutIndicesBuffer[23 + 36 * count] = ((3 + (4 * 3)) + (24 * (count)));
+
+	//Left                          
+	OutIndicesBuffer[24 + 36 * count] = ((2 + (4 * 4)) + (24 * (count)));
+	OutIndicesBuffer[25 + 36 * count] = ((1 + (4 * 4)) + (24 * (count)));
+	OutIndicesBuffer[26 + 36 * count] = ((0 + (4 * 4)) + (24 * (count)));
+
+	OutIndicesBuffer[27 + 36 * count] = ((3 + (4 * 4)) + (24 * (count)));
+	OutIndicesBuffer[28 + 36 * count] = ((2 + (4 * 4)) + (24 * (count)));
+	OutIndicesBuffer[29 + 36 * count] = ((0 + (4 * 4)) + (24 * (count)));
+
+	//Right                         
+	OutIndicesBuffer[30 + 36 * count] = ((0 + (4 * 5)) + (24 * (count)));
+	OutIndicesBuffer[31 + 36 * count] = ((1 + (4 * 5)) + (24 * (count)));
+	OutIndicesBuffer[32 + 36 * count] = ((2 + (4 * 5)) + (24 * (count)));
+
+	OutIndicesBuffer[33 + 36 * count] = ((0 + (4 * 5)) + (24 * (count)));
+	OutIndicesBuffer[34 + 36 * count] = ((2 + (4 * 5)) + (24 * (count)));
+	OutIndicesBuffer[35 + 36 * count] = ((3 + (4 * 5)) + (24 * (count)));
+}
+
+[numthreads(64, 1, 1)]
+void ConstructMesh1(uint3 id : SV_DispatchThreadID)
+{
+	if (id.x >= FilledVoxelsCount)
+	{
+		return;
+	}
+
+	int count = id.x;
+
+	float3 pos = _FilledVoxelPositionsBuffer[count].Position;
+	float3 size = _FilledVoxelPositionsBuffer[count].Size * float3(1, 1, 1);
+
+	OutVerticesBuffer[count] = _FilledVoxelPositionsBuffer[count].Position;
+
+	OutIndicesBuffer[(count * 3) + 0] = count;
+	OutIndicesBuffer[(count * 3) + 1] = count;
+	OutIndicesBuffer[(count * 3) + 2] = count;
+}
