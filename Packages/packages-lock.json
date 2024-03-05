@@ -92,6 +92,13 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
+    "com.unity.mobile.android-logcat": {
+      "version": "1.4.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
     "com.unity.nuget.mono-cecil": {
       "version": "1.11.4",
       "depth": 4,
@@ -113,7 +120,7 @@
       }
     },
     "com.unity.render-pipelines.universal": {
-      "version": "16.0.5",
+      "version": "16.0.3",
       "depth": 0,
       "source": "builtin",
       "dependencies": {
