@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class TreeNode
+public struct TreeNode
 {
     public int index;
     public int currentDepth;
@@ -12,8 +12,6 @@ public class TreeNode
     public Vector3 position;
     public float size;
     private int value;
-
-    public TreeNode() { }
 
     public TreeNode(int index, int currentDepth, int firstChild, int parent, int firstLeaf, int lastLeaf, Vector3 position, float size, int value)
     {

@@ -13,20 +13,14 @@ struct GeomData
 	float4 position : POSITION;
 };
 
-uniform float _VoxelSize;
-uniform float4 _CenterPivot;
-uniform float _DeformFactor;
-uniform float4 _SlicingPlane;
-
-void Slice(float4 plane, float3 fragPos)
-{
-	float distance = dot(fragPos.xyz, plane.xyz) + plane.w;
-
-	if (distance > 0)
-	{
-		discard;
-	}
-}
+CBUFFER_START(UnityPerMaterial)
+	float4 _Tint;
+	float _Metallic;
+	float _Smoothness;
+	uniform float _VoxelSize;
+	uniform float4 _CenterPivot;
+CBUFFER_END
+	
 
 #if defined(SHADOWS_CUBE)
 	struct Interpolators 
@@ -38,10 +32,6 @@ void Slice(float4 plane, float3 fragPos)
 
 	GeomData MyShadowVertexProgram (VertexData v)
 	{
-		float3 dir = v.position.xyz - _CenterPivot.xyz;
-		dir = normalize(dir);
-		v.position.xyz = v.position.xyz + dir * _DeformFactor;
-
 		GeomData g;
 		g.position = v.position;
 		return g;
@@ -114,7 +104,6 @@ void Slice(float4 plane, float3 fragPos)
 
 	float4 MyShadowFragmentProgram (Interpolators i) : SV_TARGET 
 	{
-		Slice(_SlicingPlane, i.worldPos);
 		float depth = length(i.lightVec) + unity_LightShadowBias.x;
 		depth *= _LightPositionRange.w;
 		return UnityEncodeCubeShadowDepth(depth);
@@ -128,10 +117,6 @@ void Slice(float4 plane, float3 fragPos)
 
 	GeomData MyShadowVertexProgram (VertexData v)
 	{
-		float3 dir = v.position.xyz - _CenterPivot.xyz;
-		dir = normalize(dir);
-		v.position.xyz = v.position.xyz + dir * _DeformFactor;
-
 		GeomData g;
 		g.position = v.position;
 		return g;
@@ -231,7 +216,6 @@ void Slice(float4 plane, float3 fragPos)
 
 	half4 MyShadowFragmentProgram (Interpolators i) : SV_TARGET
 	{
-		Slice(_SlicingPlane, i.worldPos);
 		return 0;
 	}
 #endif

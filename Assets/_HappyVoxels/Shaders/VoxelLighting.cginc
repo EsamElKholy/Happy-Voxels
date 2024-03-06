@@ -2,14 +2,9 @@
 
 #if !defined(MY_LIGHTING1_INCLUDED)
 #define MY_LIGHTING1_INCLUDED
+#include "Assets/_HappyVoxels/Shaders/UnityPBSLighting.cginc"
+#include "Assets/_HappyVoxels/Shaders/AutoLight.cginc"
 
-#include "UnityPBSLighting.cginc"
-#include "AutoLight.cginc"
-
-float4 _Tint;
-
-float _Metallic;
-float _Smoothness;
 
 struct VertexData 
 {
@@ -30,33 +25,16 @@ struct Interpolators
 	SHADOW_COORDS(5)
 };
 
-float3 CreateBinormal (float3 normal, float3 tangent, float binormalSign) 
-{
-	return cross(normal, tangent.xyz) *
-		(binormalSign * unity_WorldTransformParams.w);
-}
-
+CBUFFER_START(UnityPerMaterial)
+float4 _Tint;
+float _Metallic;
+float _Smoothness;
 uniform float _VoxelSize;
 uniform float4 _CenterPivot;
-uniform float _DeformFactor;
-uniform float4 _SlicingPlane;
-
-void Slice(float4 plane, float3 fragPos)
-{
-	float distance = dot(fragPos.xyz, plane.xyz) + plane.w;
-
-	if (distance > 0)
-	{
-		discard;
-	}
-}
+CBUFFER_END
 
 GeomData MyVertexProgram (VertexData v)
 {
-	float3 dir = v.vertex.xyz - _CenterPivot.xyz;
-	dir = normalize(dir);
-	v.vertex.xyz = v.vertex.xyz + dir * _DeformFactor;
-
 	GeomData g;
 	g.vertex = v.vertex;
 	return g;
@@ -142,7 +120,7 @@ void MyGeometryProgram(point GeomData IN[1], inout TriangleStream<Interpolators>
 		v[i].pos = UnityObjectToClipPos(v[i].pos);
 		v[i].normal = UnityObjectToWorldNormal(v[i].normal);
 
-		TRANSFER_SHADOW(v[i]);
+		//TRANSFER_SHADOW(v[i]);
 	}
 
 	// Build the cube tile by submitting triangle strip vertices
@@ -188,7 +166,6 @@ UnityIndirect CreateIndirectLight (Interpolators i)
 
 float4 MyFragmentProgram (Interpolators i) : SV_TARGET 
 {
-	Slice(_SlicingPlane, i.worldPos);
 	float3 viewDir = normalize(_WorldSpaceCameraPos - i.worldPos);
 
 	float3 albedo = _Tint.rgb;

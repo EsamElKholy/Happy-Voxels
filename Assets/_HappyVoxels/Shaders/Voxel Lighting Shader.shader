@@ -6,8 +6,6 @@
 		[Gamma] _Metallic ("Metallic", Range(0, 1)) = 0
 		_Smoothness ("Smoothness", Range(0, 1)) = 0.1
 		_VoxelSize ("Voxel Size", float) = 0
-		_CenterPivot("Center Pivot", Vector) = (0, 0, 0, 0)
-		_DeformFactor("Deform Factor", Float) = 1
 	}
 
 	CGINCLUDE
@@ -27,17 +25,15 @@
 
 			CGPROGRAM
 
-			#pragma target 3.0
 
 			#pragma multi_compile _ SHADOWS_SCREEN
-
 			#pragma vertex MyVertexProgram
 			#pragma geometry MyGeometryProgram
 			#pragma fragment MyFragmentProgram
-
+		
 			#define FORWARD_BASE_PASS
 
-			#include "Voxel Lighting.cginc"
+			#include "Assets/_HappyVoxels/Shaders/VoxelLighting.cginc"
 
 			ENDCG
 		}
@@ -54,7 +50,6 @@
 
 			CGPROGRAM
 
-			#pragma target 3.0
 
 			#pragma multi_compile_fwdadd_fullshadows
 			
@@ -62,7 +57,7 @@
 			#pragma geometry MyGeometryProgram
 			#pragma fragment MyFragmentProgram
 
-			#include "Voxel Lighting.cginc"
+			#include "Assets/_HappyVoxels/Shaders/VoxelLighting.cginc"
 
 			ENDCG
 		}
@@ -76,7 +71,6 @@
 
 			CGPROGRAM
 
-			#pragma target 3.0
 
 			#pragma multi_compile_shadowcaster
 
