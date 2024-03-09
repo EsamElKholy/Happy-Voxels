@@ -1,4 +1,4 @@
-﻿Shader"Universal Render Pipeline/Custom/Lit"
+﻿Shader"Universal Render Pipeline/Custom/VoxelLit"
 {
     // TODO: I need to support custom shader inspector for this to hide
     // scale/offset for normal map using NoScaleOffset.
@@ -76,7 +76,7 @@
 
             // -------------------------------------
             // Include custom shading helper to create vertex and fragment functions
-            #include "Assets/_HappyVoxels/Materials/Voxels/CustomShading.hlsl"
+            #include "Assets/_HappyVoxels/Shaders/CustomShading.hlsl"
 
             // -------------------------------------
             // Textures are declared in global scope

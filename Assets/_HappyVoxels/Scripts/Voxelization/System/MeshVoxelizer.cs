@@ -36,9 +36,14 @@ public class MeshVoxelizer : MonoBehaviour
     [SerializeField]
     private ComputeShader voxelComputeShader;
     [SerializeField]
+    private Material defaultMaterial;
+    [SerializeField]
     private Material geometryMaterial;
+
+    private new Renderer renderer;
     private Mesh originalMesh;
-    private MeshFilter meshFilter;
+    private Mesh voxelMesh;
+    private MeshFilter voxelMeshFilter;
     private VoxelOctree voxelOctree;
     private int currentDepth = 0;
     private float maxBoundsSize = 0;
@@ -46,23 +51,36 @@ public class MeshVoxelizer : MonoBehaviour
     [Button]
     private void Voxelize() 
     {
-        if (!meshFilter)
+        if (voxelMesh)
         {
-            meshFilter = GetComponent<MeshFilter>();
-            originalMesh = meshFilter.sharedMesh;
+            voxelMesh.Clear();
+        }
+        
+        voxelMesh = new Mesh();
+
+        if (!voxelMeshFilter)
+        {
+            voxelMeshFilter = GetComponent<MeshFilter>();      
         }
 
-        if (voxelOctree != null && voxelOctree.NodeCount > 0)
+        if (!originalMesh)
         {
-            meshFilter.sharedMesh.Clear();
-            meshFilter.sharedMesh = originalMesh;
+            originalMesh = voxelMeshFilter.mesh;
         }
 
-        if (meshFilter)
+        if (!renderer)
         {
-            maxBoundsSize = Mathf.Max(meshFilter.mesh.bounds.size.x, meshFilter.mesh.bounds.size.y, meshFilter.mesh.bounds.size.z);
+            renderer = GetComponent<MeshRenderer>();
+        }
 
-            voxelOctree = new VoxelOctree(meshFilter.mesh.bounds.center, maxBoundsSize, treeDepth);
+        voxelMeshFilter.mesh = voxelMesh;
+        renderer.material = new Material(geometryMaterial);       
+
+        if (originalMesh)
+        {
+            maxBoundsSize = Mathf.Max(originalMesh.bounds.size.x, originalMesh.bounds.size.y, originalMesh.bounds.size.z);
+
+            voxelOctree = new VoxelOctree(originalMesh.bounds.center, maxBoundsSize, treeDepth);
 
             BuildTree();
             FillTree();
@@ -71,10 +89,25 @@ public class MeshVoxelizer : MonoBehaviour
         }
         else
         {
-            Debug.LogError($"{nameof(MeshVoxelizer)}: {nameof(Voxelize)}: Failed to find mesh filter!");
+            Debug.LogError($"{nameof(MeshVoxelizer)}: {nameof(Voxelize)}: Failed to find original mesh!");
         }
     }
 
+
+    [Button]
+    private void ResetToOriginal() 
+    {
+        if (originalMesh)
+        {
+            if (voxelOctree != null && voxelOctree.NodeCount > 0)
+            {
+                voxelMeshFilter.mesh.Clear();
+                voxelMeshFilter.mesh = originalMesh;
+
+                renderer.material = new Material(defaultMaterial);
+            }
+        }
+    }
 
     private void BuildTree()
     {
@@ -100,15 +133,13 @@ public class MeshVoxelizer : MonoBehaviour
         var voxelBuffer = new ComputeBuffer(voxelOctree.Nodes.Length, Marshal.SizeOf(typeof(TreeNode)));
         voxelBuffer.SetData(voxelOctree.Nodes);
 
-        MeshFilter filter = GetComponent<MeshFilter>();
-
-        var verts = filter.mesh.vertices;
+        var verts = originalMesh.vertices;
         int vCount = verts.Length;
         int vSize = Marshal.SizeOf(typeof(Vector3));
         var vertBuffer = new ComputeBuffer(vCount, vSize);
         vertBuffer.SetData(verts);
 
-        var inds = filter.mesh.triangles;
+        var inds = originalMesh.triangles;
         int indCount = inds.Length;
         int indSize = sizeof(int);
         var indBuffer = new ComputeBuffer(indCount, indSize);
@@ -179,20 +210,20 @@ public class MeshVoxelizer : MonoBehaviour
         voxelComputeShader.SetBuffer(kernel, outVertexBuffer, vertBuffer);
         voxelComputeShader.SetBuffer(kernel, outIndexBuffer, indBuffer);
         voxelComputeShader.SetBuffer(kernel, _filledVoxelPositionsBuffer, filledVoxels);
-        voxelComputeShader.Dispatch(kernel, voxelOctree.FilledNodes.Count / 64 + 1, 1, 1);
+        voxelComputeShader.Dispatch(kernel, voxelOctree.FilledNodes.Count / 64 + 1, 1, 1);        
 
-        var renderer = GetComponent<MeshRenderer>();
-        renderer.material = geometryMaterial;
-        Debug.LogError($"voxelOctree.MaxSize {voxelOctree.MaxSize}, voxelOctree.MaxDepth {voxelOctree.MaxDepth}");
-        Debug.LogError(voxelOctree.MaxSize / Mathf.Pow(2, voxelOctree.MaxDepth) * 2);
-        geometryMaterial.SetFloat("_VoxelSize", voxelOctree.MaxSize / Mathf.Pow(2, voxelOctree.MaxDepth) );
-        meshFilter.mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-        meshFilter.mesh.Clear();
+        renderer.material.SetFloat("_VoxelSize", voxelOctree.MaxSize / Mathf.Pow(2, voxelOctree.MaxDepth) );
+
+        voxelMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+        voxelMesh.Clear();
+
         vertBuffer.GetData(v);
         indBuffer.GetData(ind);
-        meshFilter.mesh.vertices = v;
-        meshFilter.mesh.triangles = ind;
-        meshFilter.GetComponent<Renderer>().bounds.Expand(1000);
+
+        voxelMesh.vertices = v;
+        voxelMesh.triangles = ind;
+
+        //renderer.bounds.Expand(1000);
 
         filledVoxels.Dispose();
         indBuffer.Dispose();
