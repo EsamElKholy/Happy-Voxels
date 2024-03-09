@@ -119,10 +119,12 @@ public class MeshVoxelizer : MonoBehaviour
         voxelComputeShader.SetInt(voxelCount, voxelOctree.Nodes.Length);
 
         int kernel = voxelComputeShader.FindKernel(buildTreeKernel);
+        uint threadGroupX, threadGroupY, threadGroupZ;
+        voxelComputeShader.GetKernelThreadGroupSizes(kernel, out threadGroupX, out threadGroupY, out threadGroupZ);
 
         voxelComputeShader.SetBuffer(kernel, voxelOctreeBuffer, voxelBuffer);
 
-        voxelComputeShader.Dispatch(kernel, voxelOctree.NodeCount / 64 + 1, 1, 1);
+        voxelComputeShader.Dispatch(kernel, voxelOctree.NodeCount / (int)threadGroupX + 1, 1, 1);
         voxelBuffer.GetData(voxelOctree.Nodes);
 
         voxelBuffer.Dispose();
@@ -153,7 +155,10 @@ public class MeshVoxelizer : MonoBehaviour
         voxelComputeShader.SetBuffer(kernel, indexBuffer, indBuffer);
         voxelComputeShader.SetBuffer(kernel, voxelOctreeBuffer, voxelBuffer);
 
-        voxelComputeShader.Dispatch( kernel, (indCount / (3 * 64)) + 1, 1, 1);
+        uint threadGroupX, threadGroupY, threadGroupZ;
+        voxelComputeShader.GetKernelThreadGroupSizes(kernel, out threadGroupX, out threadGroupY, out threadGroupZ);
+
+        voxelComputeShader.Dispatch( kernel, (indCount / (3 * (int)threadGroupX)) + 1, 1, 1);
 
         voxelBuffer.GetData(voxelOctree.Nodes);
 
@@ -174,8 +179,10 @@ public class MeshVoxelizer : MonoBehaviour
 
         voxelComputeShader.SetBuffer(kernel, voxelOctreeBuffer, voxelBuffer);
         voxelComputeShader.SetBuffer(kernel, filledVoxelPositionsBuffer, filledVoxelsBuffer);
+        uint threadGroupX, threadGroupY, threadGroupZ;
+        voxelComputeShader.GetKernelThreadGroupSizes(kernel, out threadGroupX, out threadGroupY, out threadGroupZ);
 
-        voxelComputeShader.Dispatch(kernel, voxelOctree.NodeCount / 64 + 1, 1, 1);
+        voxelComputeShader.Dispatch(kernel, voxelOctree.NodeCount / (int)threadGroupX + 1, 1, 1);
 
         int[] counter = new int[1] { 0 };
         ComputeBuffer appendBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.IndirectArguments);
@@ -210,7 +217,11 @@ public class MeshVoxelizer : MonoBehaviour
         voxelComputeShader.SetBuffer(kernel, outVertexBuffer, vertBuffer);
         voxelComputeShader.SetBuffer(kernel, outIndexBuffer, indBuffer);
         voxelComputeShader.SetBuffer(kernel, _filledVoxelPositionsBuffer, filledVoxels);
-        voxelComputeShader.Dispatch(kernel, voxelOctree.FilledNodes.Count / 64 + 1, 1, 1);        
+
+        uint threadGroupX, threadGroupY, threadGroupZ;
+        voxelComputeShader.GetKernelThreadGroupSizes(kernel, out threadGroupX, out threadGroupY, out threadGroupZ);
+
+        voxelComputeShader.Dispatch(kernel, voxelOctree.FilledNodes.Count / (int)threadGroupX + 1, 1, 1);        
 
         renderer.material.SetFloat("_VoxelSize", voxelOctree.MaxSize / Mathf.Pow(2, voxelOctree.MaxDepth) );
 
@@ -222,8 +233,6 @@ public class MeshVoxelizer : MonoBehaviour
 
         voxelMesh.vertices = v;
         voxelMesh.triangles = ind;
-
-        //renderer.bounds.Expand(1000);
 
         filledVoxels.Dispose();
         indBuffer.Dispose();
