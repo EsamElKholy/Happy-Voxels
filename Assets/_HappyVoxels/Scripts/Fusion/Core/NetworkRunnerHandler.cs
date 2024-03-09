@@ -15,31 +15,31 @@ public class NetworkRunnerHandler : MonoBehaviour
     private NetworkRunner networkRunnerPrefab;
 
     [SerializeField]
+    [ScenePath]
     private string sceneToStart;
 
     private NetworkRunner networkRunner;
+    private Action<NetworkRunner> onGameStarted;
 
-    private void Start()
+    public void StartGame() 
     {
-        StartGame();
+        SceneLoader.OnSceneLoaded += SceneLoaded;
+        onGameStarted += GameStarted;
+        SceneLoader.LoadScene(sceneToStart, false);
     }
 
-    private void StartGame() 
+    public void Exit() 
     {
-        networkRunner = Instantiate(networkRunnerPrefab);
+        if (networkRunner)
+        {
+            networkRunner.Shutdown();
+        }
 
-        StartNetworkRunner(networkRunner, GameMode.Shared, NetAddress.Any(), SceneRef.FromIndex(SceneManager.GetSceneByName(sceneToStart).buildIndex), null).Forget();
+        Application.Quit();
     }
 
     protected virtual async UniTask StartNetworkRunner(NetworkRunner runner, GameMode gameMode, NetAddress netAddress, SceneRef scene, Action<NetworkRunner> started) 
     {
-        var sceneManager = runner.GetComponents(typeof(MonoBehaviour)).OfType<INetworkSceneManager>().FirstOrDefault();
-
-        if (sceneManager == null) 
-        {
-            runner.AddComponent<NetworkSceneManagerDefault>();
-        }
-
         runner.ProvideInput = true;
 
         var result = await runner.StartGame(new StartGameArgs()
@@ -47,9 +47,9 @@ public class NetworkRunnerHandler : MonoBehaviour
             GameMode = gameMode,
             Address = netAddress,
             Scene = scene,
-            SessionName = "Lobby",
+            SessionName = sceneToStart,
             OnGameStarted = started,
-            SceneManager = sceneManager,
+            SceneManager = null,
             PlayerCount = 4,
             IsVisible = true,
             IsOpen = true,
@@ -59,5 +59,22 @@ public class NetworkRunnerHandler : MonoBehaviour
         {
             Debug.LogError($"Failed to start game, result is {result.ErrorMessage}");
         }
+    }
+
+    private void SceneLoaded()
+    {
+        var scene = SceneManager.GetSceneByName(sceneToStart);
+        networkRunner = Instantiate(networkRunnerPrefab);
+
+        StartNetworkRunner(networkRunner, GameMode.Shared, NetAddress.Any(), SceneRef.FromPath(scene.path), onGameStarted).Forget();
+    }
+
+    private void GameStarted(NetworkRunner networkRunner)
+    {
+        onGameStarted -= GameStarted;
+
+        SingletonInterface.SingletonLocator.GameUIManager.FadeOutCurrentUI().Forget();
+
+        SceneLoader.OnSceneLoaded -= SceneLoaded;
     }
 }

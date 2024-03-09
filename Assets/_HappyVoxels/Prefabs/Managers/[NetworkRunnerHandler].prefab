@@ -46,4 +46,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   networkRunnerPrefab: {fileID: 9042343179105046659, guid: 94a29b5f6e42f0c41860ffc042a1eef2,
     type: 3}
-  sceneToStart: Start
+  sceneToStart: Lobby

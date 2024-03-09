@@ -16,7 +16,6 @@ public class FusionPlayerController : NetworkBehaviour
 
     private bool isInitialized = false;
     private FusionPlayer fusionPlayer;
-    private SpawnLocationManager spawnLocationManager;
 
     public override void Spawned()
     {
@@ -32,8 +31,6 @@ public class FusionPlayerController : NetworkBehaviour
     {       
         characterController.Move(transform.position);
         fusionPlayer = GetComponent<FusionPlayer>();
-        spawnLocationManager = FindFirstObjectByType<SpawnLocationManager>();
-        spawnLocationManager = FindFirstObjectByType<SpawnLocationManager>();
         isInitialized = true;
     }
 
@@ -64,7 +61,7 @@ public class FusionPlayerController : NetworkBehaviour
     {
         if (transform.position.y <= respawnHeight)
         {
-            var spawnLocation = spawnLocationManager.GetSpawnLocation(fusionPlayer.PlayerIndex);
+            var spawnLocation = SingletonInterface.SingletonLocator.SpawnLocationManager.GetSpawnLocation(fusionPlayer.PlayerIndex);
 
             if (spawnLocation != null) 
             {

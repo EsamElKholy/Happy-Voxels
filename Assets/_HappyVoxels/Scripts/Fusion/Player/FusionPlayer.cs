@@ -37,7 +37,6 @@ public class FusionPlayer : NetworkBehaviour
     
     public int PlayerIndex { get; private set; } = -1;   
     private PlayerAvatar currentAvatar;
-    private SpawnLocationManager spawnLocationManager;
     private AvatarType defaultAvatarType = AvatarType.Default;
     private GameObject gun;
     private Camera localCamera;
@@ -56,17 +55,12 @@ public class FusionPlayer : NetworkBehaviour
 
             Debug.LogError($"Player id {PlayerIndex}, State {HasStateAuthority}");
 
-            spawnLocationManager = FindFirstObjectByType<SpawnLocationManager>();
+            var spawnLocation = SingletonInterface.SingletonLocator.SpawnLocationManager.GetSpawnLocation(PlayerIndex);
 
-            if (spawnLocationManager)
+            if (spawnLocation != null)
             {
-                var spawnLocation = spawnLocationManager.GetSpawnLocation(PlayerIndex);
-
-                if (spawnLocation != null) 
-                {
-                    transform.position = spawnLocation.position;
-                    transform.rotation = spawnLocation.rotation;
-                }
+                transform.position = spawnLocation.position;
+                transform.rotation = spawnLocation.rotation;
             }
 
             characterInputHandler.Initialize();

@@ -9,6 +9,8 @@ EditorBuildSettings:
     path: Assets/_HappyVoxels/Scenes/Start.unity
     guid: f2b047b27b5495e46b953d0887bb6413
   m_configObjects:
+    com.unity.addressableassets: {fileID: 11400000, guid: aed6e42750f5b384b967d118ecdad8eb,
+      type: 2}
     com.unity.input.settings: {fileID: 11400000, guid: 12169b78ccde20b479face9df3be7e79,
       type: 2}
   m_UseUCBPForAssetBundles: 0

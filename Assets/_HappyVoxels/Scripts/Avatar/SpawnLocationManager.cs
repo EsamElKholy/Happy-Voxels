@@ -1,11 +1,37 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class SpawnLocationManager : MonoBehaviour
 {
-    [SerializeField]
-    private List<Transform> spawnLocations = new List<Transform>();
+    private List<SpawnLocation> spawnLocations = new List<SpawnLocation>();
+
+    private void Awake()
+    {
+        ReloadSpawnLocations();
+
+        SceneManager.activeSceneChanged += ActiveSceneChanged;
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.activeSceneChanged -= ActiveSceneChanged;
+    }
+
+    private void ActiveSceneChanged(Scene arg0, Scene arg1)
+    {
+        ReloadSpawnLocations();
+    }
+
+    private void ReloadSpawnLocations() 
+    {
+        spawnLocations.Clear();
+        var locations = FindObjectsByType<SpawnLocation>(sortMode: FindObjectsSortMode.None);
+
+        spawnLocations.AddRange(locations);
+    }
 
     public Transform GetSpawnLocation(int index) 
     {
@@ -14,6 +40,6 @@ public class SpawnLocationManager : MonoBehaviour
             index = index < 0 ? 0 : index % spawnLocations.Count;
         }
 
-        return spawnLocations[index];
+        return spawnLocations[index].transform;
     }
 }
