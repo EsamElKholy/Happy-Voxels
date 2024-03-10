@@ -1,11 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
 public class VoxelOctree 
 {
     public TreeNode[] Nodes;
+    public Vector3[] VoxelUVs;
     public List<TreeNode> FilledNodes = new List<TreeNode>();
     public int MaxDepth;
     public float MaxSize;
@@ -21,6 +23,7 @@ public class VoxelOctree
         }
         NodeCount = s;
         Nodes = new TreeNode[NodeCount];
+        VoxelUVs = Enumerable.Repeat(new Vector3(-999, -999, -1), NodeCount).ToArray();
 
         TreeNode root = new TreeNode()
         {
@@ -56,6 +59,12 @@ public class VoxelOctree
         }
 
         Nodes[0] = (root);
+    }
+
+    public void Dispose() 
+    {
+        VoxelUVs = null;
+        Nodes = null;
     }
 
     public void BuildFullTree()

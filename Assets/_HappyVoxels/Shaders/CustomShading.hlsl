@@ -268,21 +268,25 @@ void GeometryProgram(point GeometryData IN[1], inout TriangleStream<Varyings> tr
 		normals[i2] += normal;
 	}
 
+	Varyings v[36];
+    
 	for (i = 0; i < 36; i++)
 	{
 		normals[i] = normalize(normals[i]);
+        
+		v[i].positionWS = IN[0].vertex + vc[i];
+		v[i].normalWS = normals[i];
 	}
-
-	Varyings v[36];
-
+    
 	// Assign new vertices positions 
 	for (i = 0; i < 36; i++)
 	{
-		VertexPositionInputs vertexInput = GetVertexPositionInputs((IN[0].vertex + vc[i]).xyz);
-		v[i].positionWS = vertexInput.positionWS;
-		v[i].positionCS = vertexInput.positionCS;
-		v[i].normalWS = TransformObjectToHClip(normals[i]);
-		v[i].uv = IN[0].uv;
+		v[i].positionWS = TransformObjectToWorld((IN[0].vertex + vc[i]).xyz);
+		v[i].positionCS = TransformObjectToHClip((IN[0].vertex + vc[i]).xyz);
+		v[i].normalWS = TransformObjectToWorldNormal(normals[i]);
+		v[i].uv = TRANSFORM_TEX(IN[0].uv, _BaseMap);
+		//v[i].uv = v[i].positionCS.xy;
+        
 #if LIGHTMAP_ON
 		v[i].uvLightmap = IN[0].uvLightmap;
 #endif

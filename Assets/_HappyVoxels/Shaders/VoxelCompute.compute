@@ -3,6 +3,7 @@
 #pragma kernel ConstructMesh
 #pragma kernel ConstructMesh1
 #pragma kernel GetFilledVoxels
+#pragma kernel GetFilledVoxelsUVs
 #pragma kernel BuildTree
 #pragma kernel DisableVoxelsInSphere
 #pragma kernel EnableVoxelsInSphere
@@ -34,12 +35,18 @@ struct VoxelOctreeNode
 RWStructuredBuffer<VoxelOctreeNode> VoxelOctreeBuffer;
 
 RWStructuredBuffer<float3> VertexBuffer;
+	
+RWStructuredBuffer<float3> voxelUVsBuffer;
+RWStructuredBuffer<float2> UVsBuffer;
+	
 RWStructuredBuffer<int> IndexBuffer;
 
 RWStructuredBuffer<float3> OutVerticesBuffer;
+AppendStructuredBuffer<float2> OutUVsBuffer;
 RWStructuredBuffer<int> OutIndicesBuffer;
 
 AppendStructuredBuffer<VoxelOctreeNode> FilledVoxelPositionsBuffer;
+AppendStructuredBuffer<float2> FilledVoxelUVsBuffer;
 
 RWStructuredBuffer<VoxelOctreeNode> _FilledVoxelPositionsBuffer;
 int FilledVoxelsCount;
@@ -407,7 +414,7 @@ void FillTree(uint3 id : SV_DispatchThreadID)
 	float3 v0 = VertexBuffer[i0];
 	float3 v1 = VertexBuffer[i1];
 	float3 v2 = VertexBuffer[i2];
-
+		
 	int min = 0;
 	int i = 0;
 	for (i = 0; i <= MaxDepth - 1; i++)
@@ -443,6 +450,8 @@ void FillTree(uint3 id : SV_DispatchThreadID)
 				if (intersecting == 1)
 				{
 					VoxelOctreeBuffer[j].Value = 1;
+						
+					voxelUVsBuffer[j] = float3((UVsBuffer[i0] + UVsBuffer[i1] + UVsBuffer[i2]) / 3, j);
 				}
 			}
 
@@ -466,6 +475,20 @@ void GetFilledVoxels(uint3 id : SV_DispatchThreadID)
 	if (VoxelOctreeBuffer[id.x].Value == 1)
 	{
 		FilledVoxelPositionsBuffer.Append(VoxelOctreeBuffer[id.x]);
+	}
+}
+	
+[numthreads(64, 1, 1)]
+void GetFilledVoxelsUVs(uint3 id : SV_DispatchThreadID)
+{		
+	if (id.x >= VoxelCount)
+	{
+		return;
+	}
+	int index = id.x;
+	if (voxelUVsBuffer[index].z >= 0)
+	{
+		FilledVoxelUVsBuffer.Append(voxelUVsBuffer[index].xy);
 	}
 }
 
@@ -619,8 +642,9 @@ void ConstructMesh1(uint3 id : SV_DispatchThreadID)
 	float3 size = _FilledVoxelPositionsBuffer[count].Size * float3(1, 1, 1);
 
 	OutVerticesBuffer[count] = _FilledVoxelPositionsBuffer[count].Position;
-
+	
 	OutIndicesBuffer[(count * 3) + 0] = count;
 	OutIndicesBuffer[(count * 3) + 1] = count;
 	OutIndicesBuffer[(count * 3) + 2] = count;
 }
+	
