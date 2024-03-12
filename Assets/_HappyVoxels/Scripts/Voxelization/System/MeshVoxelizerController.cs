@@ -6,6 +6,9 @@ using UnityEngine;
 
 public class MeshVoxelizerController : MonoBehaviour
 {
+    [SerializeField]
+    private string voxelizerName;
+
     [ReadOnly]
     [SerializeField]
     private int totalFilledVoxels = 0;
@@ -17,6 +20,9 @@ public class MeshVoxelizerController : MonoBehaviour
     private MeshVoxelizer[] voxelizersInChildren;
     private int[] filledVoxelCounts;
     private int[] totalVoxelCounts;
+
+    public string VoxelizerName { get { return voxelizerName; } }
+
     private void Awake()
     {
         voxelizersInChildren = GetComponentsInChildren<MeshVoxelizer>();
@@ -25,8 +31,11 @@ public class MeshVoxelizerController : MonoBehaviour
     }
 
     [Button]
-    private void Voxelize() 
+    public void Voxelize() 
     {
+        totalVoxels = 0;
+        totalFilledVoxels = 0;
+
         for (int i = 0; i < voxelizersInChildren.Length; i++)
         {
             var voxelizer = voxelizersInChildren[i];
@@ -50,7 +59,7 @@ public class MeshVoxelizerController : MonoBehaviour
     }
 
     [Button]
-    private void ResetToOriginal()
+    public void ResetToOriginal()
     {
         foreach (var voxelizer in voxelizersInChildren)
         {
@@ -63,7 +72,7 @@ public class MeshVoxelizerController : MonoBehaviour
 
     private async UniTask VoxelizeAsync(MeshVoxelizer voxelizer, int index) 
     {
-        await UniTask.WaitForSeconds(Random.Range(0.5f, 2.5f));
+        await UniTask.WaitForSeconds(Random.Range(0.5f, 1.5f));
 
         voxelizer.Voxelize();
 

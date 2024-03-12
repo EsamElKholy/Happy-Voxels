@@ -284,7 +284,7 @@ void GeometryProgram(point GeometryData IN[1], inout TriangleStream<Varyings> tr
 		v[i].positionWS = TransformObjectToWorld((IN[0].vertex + vc[i]).xyz);
 		v[i].positionCS = TransformObjectToHClip((IN[0].vertex + vc[i]).xyz);
 		v[i].normalWS = TransformObjectToWorldNormal(normals[i]);
-		v[i].uv = TRANSFORM_TEX(IN[0].uv, _BaseMap);
+		v[i].uv = IN[0].uv;
 		//v[i].uv = v[i].positionCS.xy;
         
 #if LIGHTMAP_ON

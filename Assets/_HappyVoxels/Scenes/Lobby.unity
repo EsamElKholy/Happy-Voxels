@@ -2490,6 +2490,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee9662145c3712347a841cb674970918, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  voxelizerName: shin goji
   totalFilledVoxels: 0
   totalVoxels: 0
 --- !u!1 &1585601425
