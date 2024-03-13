@@ -6,7 +6,7 @@ using UnityEngine;
 public class FusionVoxelMeshController : NetworkBehaviour
 {
     [Networked, Capacity(10), OnChangedRender(nameof(OnVoxelStateChanged))]
-    private NetworkDictionary<string, bool> voxelStates {  get; set; } = MakeInitializer(new Dictionary<string, bool>());
+    private NetworkDictionary<string, bool> VoxelStates {  get; } = MakeInitializer(new Dictionary<string, bool>());
 
     private VoxelMeshScene voxelMeshScene;
 
@@ -24,7 +24,7 @@ public class FusionVoxelMeshController : NetworkBehaviour
     {
         if (voxelMeshScene)
         {
-            foreach (var state in voxelStates) 
+            foreach (var state in VoxelStates) 
             {
                 var controller = voxelMeshScene.GetMeshVoxelizerController(state.Key);            
                 if (state.Value)
