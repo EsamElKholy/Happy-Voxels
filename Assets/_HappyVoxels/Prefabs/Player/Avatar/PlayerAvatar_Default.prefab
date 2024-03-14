@@ -134,8 +134,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   avatarType: 0
-  gunPrefab: {fileID: 5291420613801907394, guid: 966ce1cfc84f1b9448e9525ca04dce05,
-    type: 3}
   gunSpawnLocation: {fileID: 8183175674973647414}
 --- !u!1001 &6083076106234098166
 PrefabInstance:

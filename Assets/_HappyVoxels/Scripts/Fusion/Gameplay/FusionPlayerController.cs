@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem.XR;
 
 public class FusionPlayerController : NetworkBehaviour
 {
@@ -13,9 +14,12 @@ public class FusionPlayerController : NetworkBehaviour
     private float playerSpeed = 2;   
     [SerializeField]
     private float respawnHeight = -10;
+    [SerializeField]
+    private float gravityValue = 9.81f;
 
     private bool isInitialized = false;
     private FusionPlayer fusionPlayer;
+    private float verticalVelocity;
 
     public override void Spawned()
     {
@@ -41,7 +45,7 @@ public class FusionPlayerController : NetworkBehaviour
         if (!isInitialized)
         {
             return;
-        }       
+        }
 
         if (fusionPlayer && fusionPlayer.CurrentAvatar && fusionPlayer.LocalCamera)
         {
@@ -50,7 +54,17 @@ public class FusionPlayerController : NetworkBehaviour
 
         if (GetInput(out NetworkInputData networkInputData))
         {
-            Vector3 move = new Vector3(networkInputData.movementInput.x, 0, networkInputData.movementInput.y) * Runner.DeltaTime * playerSpeed;
+            bool groundedPlayer = characterController.isGrounded;
+
+            if (groundedPlayer && verticalVelocity < 0)
+            {
+                verticalVelocity = 0f;
+            }
+
+            verticalVelocity -= gravityValue * Runner.DeltaTime;
+
+            Vector3 move = new Vector3(networkInputData.movementInput.x, verticalVelocity, networkInputData.movementInput.y) * Runner.DeltaTime * playerSpeed;
+
             characterController.Move(transform.TransformDirection(move));
         }
 

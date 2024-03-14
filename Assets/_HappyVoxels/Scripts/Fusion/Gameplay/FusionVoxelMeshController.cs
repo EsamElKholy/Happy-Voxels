@@ -6,7 +6,7 @@ using UnityEngine;
 public class FusionVoxelMeshController : NetworkBehaviour
 {
     [Networked, Capacity(10), OnChangedRender(nameof(OnVoxelStateChanged))]
-    private NetworkDictionary<string, bool> VoxelStates {  get; } = MakeInitializer(new Dictionary<string, bool>());
+    private NetworkDictionary<string, bool> VoxelStates { get; } = MakeInitializer(new Dictionary<string, bool>());
 
     private VoxelMeshScene voxelMeshScene;
 
@@ -18,6 +18,18 @@ public class FusionVoxelMeshController : NetworkBehaviour
         base.Spawned();
 
         voxelMeshScene = FindAnyObjectByType<VoxelMeshScene>();
+
+        if (HasStateAuthority)
+        {
+            if (VoxelStates.Count == 0)
+            {
+                var names = voxelMeshScene.GetMeshVoxelizerControllerNames();
+                foreach (var name in names) 
+                {
+                    VoxelStates.Add(name, voxelMeshScene.StartVoxelized);                
+                }
+            }
+        }
     }
 
     private void OnVoxelStateChanged() 
@@ -29,11 +41,11 @@ public class FusionVoxelMeshController : NetworkBehaviour
                 var controller = voxelMeshScene.GetMeshVoxelizerController(state.Key);            
                 if (state.Value)
                 {
-                    controller.ResetToOriginal();
+                    controller.Voxelize(); 
                 }
                 else
                 {
-                    controller.Voxelize(); 
+                    controller.ResetToOriginal();
                 }
             }
         }

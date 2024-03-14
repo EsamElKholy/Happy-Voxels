@@ -38,7 +38,7 @@ public class NetworkRunnerHandler : MonoBehaviour
         Application.Quit();
     }
 
-    protected virtual async UniTask StartNetworkRunner(NetworkRunner runner, GameMode gameMode, NetAddress netAddress, SceneRef scene, Action<NetworkRunner> started) 
+    protected virtual async UniTask StartNetworkRunner(NetworkRunner runner, GameMode gameMode, NetAddress netAddress, Action<NetworkRunner> started) 
     {
         runner.ProvideInput = true;
 
@@ -46,7 +46,7 @@ public class NetworkRunnerHandler : MonoBehaviour
         {
             GameMode = gameMode,
             Address = netAddress,
-            Scene = scene,
+            Scene = null,
             SessionName = sceneToStart,
             OnGameStarted = started,
             SceneManager = null,
@@ -66,7 +66,7 @@ public class NetworkRunnerHandler : MonoBehaviour
         var scene = SceneManager.GetSceneByName(sceneToStart);
         networkRunner = Instantiate(networkRunnerPrefab);
 
-        StartNetworkRunner(networkRunner, GameMode.Shared, NetAddress.Any(), SceneRef.FromPath(scene.path), onGameStarted).Forget();
+        StartNetworkRunner(networkRunner, GameMode.Shared, NetAddress.Any(), onGameStarted).Forget();
     }
 
     private void GameStarted(NetworkRunner networkRunner)

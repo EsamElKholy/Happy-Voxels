@@ -24,7 +24,8 @@
 
         [Header(Emission)]
         [HDR]_Emission("Emission Color", Color) = (0,0,0,1)
-		_VoxelSize ("Voxel Size", float) = 0
+        _VoxelSize("Voxel Size", float) = 0
+        _OptionalColorIntensity("Optional Color Intensity", float) = 1
     }
 
     SubShader
@@ -49,6 +50,7 @@
         half4 _Emission;
         half _NormalMapScale;
         float _VoxelSize;
+        float _OptionalColorIntensity;
         CBUFFER_END
 
         ENDHLSL
@@ -94,7 +96,7 @@
 	            half4 metallicSmoothness = SAMPLE_TEXTURE2D(_MetallicSmoothnessMap, sampler_BaseMap, uv);
 	            half metallic = _Metallic * metallicSmoothness.r;
                             // diffuse color is black for metals and baseColor for dieletrics
-	            surfaceData.diffuse = ComputeDiffuseColor(baseColor.rgb, metallic);
+	            surfaceData.diffuse = ComputeDiffuseColor(baseColor.rgb * _OptionalColorIntensity, metallic);
 
                             // f0 is reflectance at normal incidence. we store f0 in baseColor for metals.
                             // for dieletrics f0 is monochromatic and stored in reflectance value.

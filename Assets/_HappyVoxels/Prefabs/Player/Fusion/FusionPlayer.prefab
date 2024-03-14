@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 7754567140404390134}
   - component: {fileID: 3061205827485251563}
   - component: {fileID: 6354592771839870229}
+  - component: {fileID: 8402178701870791752}
   m_Layer: 0
   m_Name: FusionPlayer
   m_TagString: Untagged
@@ -88,6 +89,7 @@ MonoBehaviour:
   - {fileID: 1795283288489794767}
   - {fileID: 7754567140404390134}
   - {fileID: 3061205827485251563}
+  - {fileID: 8402178701870791752}
 --- !u!114 &430598257792962392
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -101,8 +103,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterController: {fileID: 883930510456708969}
-  playerSpeed: 4
-  respawnHeight: -10
+  playerSpeed: 20
+  respawnHeight: -555
+  gravityValue: 9.81
 --- !u!143 &883930510456708969
 CharacterController:
   m_ObjectHideFlags: 0
@@ -183,7 +186,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c9450f6da27a064a9abd0cf47e3a4ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cameraSensitivity: {x: 60, y: 200}
+  cameraSensitivity: {x: 200, y: 600}
 --- !u!114 &6354592771839870229
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -194,5 +197,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e6eef806f0240e545bcc5121ea6eed64, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &8402178701870791752
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7491462185953015827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 464cd49e00d92d54d83a429cf2eca8d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
