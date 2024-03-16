@@ -9,6 +9,7 @@ public class VoxelOctree
     public TreeNode[] Nodes;
     public Vector3[] VoxelUVs;
     public List<TreeNode> FilledNodes = new List<TreeNode>();
+    public List<Vector2> FilledNodesUVs = new List<Vector2>();
     public int MaxDepth;
     public float MaxSize;
     public int NodeCount;
@@ -165,7 +166,7 @@ public class VoxelOctree
         }
     }
 
-    public List<TreeNode> CheckRay(Ray ray, Transform transform)
+    public List<TreeNode> CheckRay(Ray ray, Transform transform, float customScale) 
     {
         List<TreeNode> hitNodes = new List<TreeNode>();
         int min = 0;
@@ -182,7 +183,7 @@ public class VoxelOctree
             while (parentIndex != -1)
             {
                 var parent = Nodes[parentIndex];
-                Bounds bounds = new Bounds(transform.TransformPoint(parent.position), Vector3.one * parent.size);
+                Bounds bounds = new Bounds(transform.TransformPoint(parent.position), Vector3.one * parent.size * customScale);
                 int intersecting = bounds.IntersectRay(ray) ? 1 : 0;
 
                 if (intersecting == 1)
@@ -200,7 +201,7 @@ public class VoxelOctree
             {
                 for (int j = i; j < i + 8; j++)
                 {
-                    Bounds bounds = new Bounds(transform.TransformPoint(Nodes[j].position), Vector3.one * Nodes[j].size);
+                    Bounds bounds = new Bounds(transform.TransformPoint(Nodes[j].position), Vector3.one * Nodes[j].size * customScale);
                     float distance = 0;
                     int intersecting = bounds.IntersectRay(ray, out distance) ? 1 : 0;
                     if (intersecting == 1)
@@ -223,6 +224,11 @@ public class VoxelOctree
         }
 
         return hitNodes;
+    }
+
+    public List<TreeNode> CheckRay(Ray ray, Transform transform)
+    {
+        return CheckRay(ray, transform, 1);
     }
 
     public List<TreeNode> CastSphere(Vector3 center, float raduis)
@@ -362,6 +368,20 @@ public class VoxelOctree
             {
                 i = lastSkip + 1;
             }
+        }
+    }
+    
+    public void ActivateUVAt(int[] index, bool active) 
+    {        
+        for (int i = 0; i < VoxelUVs.Length; i++)
+        {
+            for (int j = 0; j < index.Length; j++)
+            {
+                if ((int)Mathf.Abs(VoxelUVs[i].z) == index[j])
+                {
+                    VoxelUVs[i].z = (int)Mathf.Abs(VoxelUVs[i].z) * (active ? 1 : -1);
+                }
+            }            
         }
     }
 

@@ -102,7 +102,7 @@ public class RunnerCallback : MonoBehaviour, INetworkRunnerCallbacks
 
     public virtual void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
-        Debug.LogError($"Fusion: RunnerCallbacks: OnShutdown: Reason = {shutdownReason}");
+        Debug.LogWarning($"Fusion: RunnerCallbacks: OnShutdown: Reason = {shutdownReason}");
     }
 
     public virtual void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message)

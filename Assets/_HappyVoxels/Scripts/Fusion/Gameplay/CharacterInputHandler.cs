@@ -10,6 +10,8 @@ public class CharacterInputHandler : MonoBehaviour
     private Vector2 aim;
     private Vector2 move;
     private bool isFiring = false;
+    private bool isSphereEnabling = false;
+    private bool isSphereDisabling = false;
 
     private void OnDestroy()
     {
@@ -21,7 +23,8 @@ public class CharacterInputHandler : MonoBehaviour
     {
         isInitialized = true;
         RunnerCallback.OnPlayerInput += OnPlayerInput;
-    }   
+        Cursor.lockState = CursorLockMode.Locked;
+    }
 
     private void Update()
     {
@@ -39,11 +42,23 @@ public class CharacterInputHandler : MonoBehaviour
         if (Input.GetButton("Fire1"))
         {
             isFiring = true;
+            isSphereDisabling = true;
         }
 
         if (Input.GetButtonUp("Fire1"))
         {
             isFiring = false;
+            isSphereDisabling = false;
+        }
+
+        if (Input.GetButton("Fire2"))
+        {
+            isSphereEnabling = true;
+        }
+
+        if (Input.GetButtonUp("Fire2"))
+        {
+            isSphereEnabling = false;
         }
     }
 
@@ -59,6 +74,8 @@ public class CharacterInputHandler : MonoBehaviour
         networkInputData.mouseAim = aim;
         networkInputData.movementInput = move;
         networkInputData.isFiring = isFiring;
+        networkInputData.isSphereEnabling = isSphereEnabling;
+        networkInputData.isSphereDisabling = isSphereDisabling;
 
         return networkInputData;
     }

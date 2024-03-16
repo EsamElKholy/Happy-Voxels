@@ -17,6 +17,14 @@ public class MeshVoxelizerController : MonoBehaviour
     [SerializeField]
     private int totalVoxels = 0;
 
+    [SerializeField]
+    private bool useGlobalDepth;
+
+    [ShowIf("useGlobalDepth")]
+    [Range(1, 10)]
+    [SerializeField]
+    private int treeDepth = 1;
+
     private MeshVoxelizer[] voxelizersInChildren;
     private int[] filledVoxelCounts;
     private int[] totalVoxelCounts;
@@ -72,9 +80,15 @@ public class MeshVoxelizerController : MonoBehaviour
 
     private async UniTask VoxelizeAsync(MeshVoxelizer voxelizer, int index) 
     {
-        await UniTask.WaitForSeconds(Random.Range(0.5f, 1.5f));
-
-        voxelizer.Voxelize();
+        await UniTask.WaitForSeconds(Random.Range(0.1f, 0.75f));
+        if (useGlobalDepth)
+        {
+            voxelizer.Voxelize(treeDepth);
+        }
+        else
+        {
+            voxelizer.Voxelize();
+        }
 
         await UniTask.WaitUntil(() => { return voxelizer.GetFilledNodeCount() != 0; });
         filledVoxelCounts[index] = voxelizer.GetFilledNodeCount();

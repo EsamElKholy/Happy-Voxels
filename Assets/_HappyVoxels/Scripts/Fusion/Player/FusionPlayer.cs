@@ -21,6 +21,8 @@ public class FusionPlayer : NetworkBehaviour
     private FusionGunController fusionGunController;
     [SerializeField]
     private FusionCameraController fusionCameraController;
+    [SerializeField]
+    private FusionVoxelMeshController fusionVoxelMeshController;
 
     [SerializeField]
     private Camera cameraPrefab;
@@ -53,8 +55,6 @@ public class FusionPlayer : NetworkBehaviour
         {
             PlayerIndex = Object.StateAuthority.AsIndex - 1;
 
-            Debug.LogError($"Player id {PlayerIndex}, State {HasStateAuthority}");
-
             var spawnLocation = SingletonInterface.SingletonLocator.SpawnLocationManager.GetSpawnLocation(PlayerIndex);
 
             if (spawnLocation != null)
@@ -65,7 +65,6 @@ public class FusionPlayer : NetworkBehaviour
 
             characterInputHandler.Initialize();
             fusionPlayerController.Initialize();
-
             CurrentAvatarType = defaultAvatarType;
         }
         else
@@ -117,6 +116,7 @@ public class FusionPlayer : NetworkBehaviour
         localCamera.gameObject.SetActive(true);
 
         fusionCameraController.Initialize(localCamera, transform);
+        fusionVoxelMeshController.Initialize(this);
     }
 
     private void SpawnGun() 

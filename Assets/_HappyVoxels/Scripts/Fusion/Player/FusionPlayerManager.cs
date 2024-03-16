@@ -69,7 +69,7 @@ public class FusionPlayerManager : SimulationBehaviour
             }
         }
 
-        Debug.LogError($"Cached players {spawnedPlayer.Count}");
+        Debug.LogWarning($"Cached players {spawnedPlayer.Count}");
     }
 
     private async UniTask WaitForSpawnToCache(PlayerRef player) 

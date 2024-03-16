@@ -62,6 +62,7 @@ MonoBehaviour:
   fusionPlayerController: {fileID: 430598257792962392}
   fusionGunController: {fileID: 7754567140404390134}
   fusionCameraController: {fileID: 3061205827485251563}
+  fusionVoxelMeshController: {fileID: 8402178701870791752}
   cameraPrefab: {fileID: 8685197645584643016, guid: e69903868cddff94b9252bc6cd74b77e,
     type: 3}
   gunPrefab: {fileID: 5291420613801907394, guid: 966ce1cfc84f1b9448e9525ca04dce05,
@@ -211,3 +212,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 464cd49e00d92d54d83a429cf2eca8d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sphereCastRaduis: 3
+  sphereAimPrefab: {fileID: 7575138309247321375, guid: 87a79e567f820a04487e8c35e176fa20,
+    type: 3}
