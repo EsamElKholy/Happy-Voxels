@@ -149,19 +149,19 @@ public class FusionVoxelMeshController : NetworkBehaviour
                     else
                     {
                         sphereAim.SetActive(false);
-                        Debug.LogError($"No closest node on {meshVoxelizer}");
+                        //Debug.LogError($"No closest node on {meshVoxelizer}");
                     }
                 }
                 else
                 {
                     sphereAim.SetActive(false);
-                    Debug.LogError($"No tree nodes found on {meshVoxelizer}");
+                    //Debug.LogError($"No tree nodes found on {meshVoxelizer}");
                 }
             }
             else
             {
                 sphereAim.SetActive(false);
-                Debug.LogError($"No mesh voxelizer on {hitInfo.collider.gameObject}");
+                //Debug.LogError($"No mesh voxelizer on {hitInfo.collider.gameObject}");
             }
         }
         else
@@ -240,7 +240,7 @@ public class FusionVoxelMeshController : NetworkBehaviour
         {
             if (counter >= 32)
             {
-                RPC_SendEditData(player, networkBuffer);
+                RPC_SendEditData(player, networkBuffer, 32);
                 await UniTask.DelayFrame(2);
                 counter = 0;
                 index = 0;
@@ -249,24 +249,28 @@ public class FusionVoxelMeshController : NetworkBehaviour
             index = networkBuffer.Record(data[i], index);
             counter++;
         }
+
+        RPC_SendEditData(player, networkBuffer, counter);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_SendEditData([RpcTarget] PlayerRef player, NetworkBuffer data) 
+    private void RPC_SendEditData([RpcTarget] PlayerRef player, NetworkBuffer data, int dataCount) 
     {
+        //Debug.LogError($"data count {dataCount}");
         Vector4 editData = Vector4.zero;
         int counter = 0;
-        for (int j = 0; j < 32; j++)
+        for (int j = 0; j < dataCount; j++)
         {
-            if (j >= 4)
+            if (counter >= 4)
             {
                 EditVoxels(editData);
                 counter = 0;
                 editData = Vector4.zero;
             }
-            var f = data.GetFloat(j);
+            var f = data.GetFloat(j * sizeof(float));
             editData[counter++] = f;
         }
+        EditVoxels(editData);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -277,9 +281,11 @@ public class FusionVoxelMeshController : NetworkBehaviour
 
     private void EditVoxels(Vector4 data) 
     {
+        //Debug.LogError($"voxelizer index {data.x}, closest node index {data.y}");
+
         MeshVoxelizer meshVoxelizer = voxelMeshScene.GetMeshVoxelizerAtIndex((int)data.x);
         TreeNode closestNode = meshVoxelizer.GetNodeAt((int)data.y);
 
-        meshVoxelizer.DisableNodesInSphere(closestNode, sphereCastRaduis, false);
+        meshVoxelizer.DisableNodesInSphere(closestNode, (int)data.z, false);
     }
 }

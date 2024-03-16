@@ -431,7 +431,6 @@ public class VoxelOctree
 
     public TreeNode GetNodeAt(int index) 
     {
-        Debug.LogError(index);
         return Nodes.First(n => n.index == index);
     }
 }
