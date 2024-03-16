@@ -14,6 +14,7 @@ public class SingletonLocator : MonoBehaviour
     public GameUIManager GameUIManager => GetInstance<GameUIManager>();
     public NetworkRunnerHandler NetworkRunner => GetInstance<NetworkRunnerHandler>();
     public SpawnLocationManager SpawnLocationManager => GetInstance<SpawnLocationManager>();
+    public FusionPlayerManager FusionPlayerManager => GetInstance<FusionPlayerManager>();
 
     private void Awake()
     {

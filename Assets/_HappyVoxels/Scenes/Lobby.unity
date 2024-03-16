@@ -1188,7 +1188,7 @@ MonoBehaviour:
   totalFilledVoxels: 0
   totalVoxels: 0
   useGlobalDepth: 1
-  treeDepth: 6
+  treeDepth: 5
 --- !u!65 &665739885
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2345,7 +2345,7 @@ MonoBehaviour:
   totalFilledVoxels: 0
   totalVoxels: 0
   useGlobalDepth: 1
-  treeDepth: 6
+  treeDepth: 5
 --- !u!65 &1273655397
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3108,7 +3108,7 @@ MonoBehaviour:
   totalFilledVoxels: 0
   totalVoxels: 0
   useGlobalDepth: 1
-  treeDepth: 6
+  treeDepth: 5
 --- !u!65 &2134399394
 BoxCollider:
   m_ObjectHideFlags: 0

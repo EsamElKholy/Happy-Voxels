@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class MeshVoxelizer : MonoBehaviour
 {
@@ -520,5 +521,10 @@ public class MeshVoxelizer : MonoBehaviour
         }
 
         return result;
+    }
+
+    public TreeNode GetNodeAt(int index)
+    {
+        return voxelOctree.GetNodeAt(index);
     }
 }

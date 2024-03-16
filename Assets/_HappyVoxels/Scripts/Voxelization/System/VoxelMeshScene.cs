@@ -13,6 +13,8 @@ public class VoxelMeshScene : MonoBehaviour
     [SerializeField]
     private bool startVoxelized = false;
 
+    private List<MeshVoxelizer> meshVoxelizers = new List<MeshVoxelizer>();
+
     public bool StartVoxelized { get { return startVoxelized; } }
 
     private void Awake()
@@ -27,6 +29,7 @@ public class VoxelMeshScene : MonoBehaviour
             if (voxelController != null)
             {
                 voxelMeshControllerInScene.Add(voxelController);
+                meshVoxelizers.AddRange(voxelController.GetComponentsInChildren<MeshVoxelizer>());
             }
         }
     }
@@ -34,6 +37,21 @@ public class VoxelMeshScene : MonoBehaviour
     public MeshVoxelizerController GetMeshVoxelizerController(string name) 
     {
         return voxelMeshControllerInScene.Find(x => x.VoxelizerName == name);
+    }
+
+    public MeshVoxelizerController GetMeshVoxelizerController(int index)
+    {
+        return voxelMeshControllerInScene[index];
+    }
+
+    public int GetMeshVoxelizerIndex(MeshVoxelizer meshVoxelizer)
+    {
+        return meshVoxelizers.IndexOf(meshVoxelizer);
+    }
+
+    public MeshVoxelizer GetMeshVoxelizerAtIndex(int index)
+    {
+        return meshVoxelizers[index];
     }
 
     public List<string> GetMeshVoxelizerControllerNames() 

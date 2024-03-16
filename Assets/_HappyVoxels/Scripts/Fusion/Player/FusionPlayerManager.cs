@@ -14,6 +14,7 @@ public class FusionPlayerManager : SimulationBehaviour
     private NetworkPrefabRef playerPrefab;
 
     private Dictionary<PlayerRef, FusionPlayer> spawnedPlayer = new();
+    public Action<PlayerRef> OnAnotherPlayerJoined;
 
     private void Awake()
     {
@@ -93,6 +94,7 @@ public class FusionPlayerManager : SimulationBehaviour
         }
 
         Debug.LogError($"Cached players {spawnedPlayer.Count}");
+        OnAnotherPlayerJoined?.Invoke(player);
     }
 
     private void PlayerLeft(PlayerRef player) 

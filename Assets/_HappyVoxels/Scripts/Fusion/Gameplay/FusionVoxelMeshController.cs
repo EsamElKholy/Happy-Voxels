@@ -1,4 +1,6 @@
+using Cysharp.Threading.Tasks;
 using Fusion;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
@@ -17,8 +19,7 @@ public class FusionVoxelMeshController : NetworkBehaviour
 
     private VoxelMeshScene voxelMeshScene;
 
-    private List<Vector2> addedVoxels = new List<Vector2>();
-    private List<Vector2> removedVoxels = new List<Vector2>();
+    private List<Vector4> removedVoxels = new();
     private GameObject sphereAim;
 
     private bool isInitialized = false;
@@ -44,7 +45,24 @@ public class FusionVoxelMeshController : NetworkBehaviour
                     VoxelStates.Add(name, voxelMeshScene.StartVoxelized);                
                 }
             }
+
+            SingletonInterface.SingletonLocator.FusionPlayerManager.OnAnotherPlayerJoined += AnotherPlayerJoined;
         }
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        base.Despawned(runner, hasState);
+
+        if (runner && HasStateAuthority)
+        {
+            SingletonInterface.SingletonLocator.FusionPlayerManager.OnAnotherPlayerJoined -= AnotherPlayerJoined;
+        }
+    }
+
+    private void AnotherPlayerJoined(PlayerRef player)
+    {
+        SendEditData(player).Forget();
     }
 
     public void Initialize(FusionPlayer player) 
@@ -114,7 +132,9 @@ public class FusionVoxelMeshController : NetworkBehaviour
                             {
                                 if (networkInputData.isSphereDisabling)
                                 {
-                                    meshVoxelizer.DisableNodesInSphere(closestNode, sphereCastRaduis, false);
+                                    Vector4 data = new Vector4(voxelMeshScene.GetMeshVoxelizerIndex(meshVoxelizer), closestNode.index, sphereCastRaduis, -1);
+                                    removedVoxels.Add(data);
+                                    RPC_EditVoxels(data);
                                     isEditing = true;
                                 }
 
@@ -199,5 +219,67 @@ public class FusionVoxelMeshController : NetworkBehaviour
     {
         cameraRay.origin = camera.transform.position;
         cameraRay.direction = camera.transform.forward;
+    }
+
+    private async UniTask SendEditData(PlayerRef player) 
+    {
+        await UniTask.WaitForSeconds(3);
+        List<float> data = new List<float>();
+        for (int i = 0; i < removedVoxels.Count; i++)
+        {
+            data.Add(removedVoxels[i].x);
+            data.Add(removedVoxels[i].y);
+            data.Add(removedVoxels[i].z);
+            data.Add(removedVoxels[i].w);
+        }
+
+        int counter = 0;
+        NetworkBuffer networkBuffer = new NetworkBuffer();
+        int index = 0;
+        for (int i = 0; i < data.Count; i++)
+        {
+            if (counter >= 32)
+            {
+                RPC_SendEditData(player, networkBuffer);
+                await UniTask.DelayFrame(2);
+                counter = 0;
+                index = 0;
+                networkBuffer = new NetworkBuffer();
+            }
+            index = networkBuffer.Record(data[i], index);
+            counter++;
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_SendEditData([RpcTarget] PlayerRef player, NetworkBuffer data) 
+    {
+        Vector4 editData = Vector4.zero;
+        int counter = 0;
+        for (int j = 0; j < 32; j++)
+        {
+            if (j >= 4)
+            {
+                EditVoxels(editData);
+                counter = 0;
+                editData = Vector4.zero;
+            }
+            var f = data.GetFloat(j);
+            editData[counter++] = f;
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_EditVoxels(Vector4 data)
+    {
+        EditVoxels(data);
+    }
+
+    private void EditVoxels(Vector4 data) 
+    {
+        MeshVoxelizer meshVoxelizer = voxelMeshScene.GetMeshVoxelizerAtIndex((int)data.x);
+        TreeNode closestNode = meshVoxelizer.GetNodeAt((int)data.y);
+
+        meshVoxelizer.DisableNodesInSphere(closestNode, sphereCastRaduis, false);
     }
 }

@@ -6,7 +6,7 @@ using UnityEditor.Build.Pipeline;
 using UnityEngine;
 using static UnityEngine.Rendering.DebugUI;
 
-public class NetworkBuffer<T> : INetworkStruct
+public struct NetworkBuffer : INetworkStruct
 {
     public const int BufferLength = 128;
 
@@ -14,12 +14,10 @@ public class NetworkBuffer<T> : INetworkStruct
     private NetworkArray<byte> Buffer => default;
 
     public byte[] Data => Buffer.ToArray();
-    public int Count { get; private set; }
-    private Type currentType;
 
-    public NetworkBuffer(params T[] args)
+    public NetworkBuffer(params object[] args)
     {
-        currentType = typeof(T);
+       
         var index = 0;
         foreach (var arg in args)
         {
@@ -42,40 +40,7 @@ public class NetworkBuffer<T> : INetworkStruct
         }
     }
 
-    public int Record(T value, int startIndex) 
-    {
-        if (value is bool @bool)
-        {
-            return Record(@bool, startIndex);
-        }
-        else if (value is int @int)
-        {
-            return Record(@int, startIndex);
-        }
-        else if (value is float @float)
-        {
-            return Record(@float, startIndex);
-        }
-        else
-        {
-            Debug.LogError($"Unsupported parameter.{value.GetType()}");
-        }
-
-        return -1;
-    }
-
-    private int Record(bool value, int startIndex)
-    {
-        var bytes = BitConverter.GetBytes(value);
-        for (var i = 0; i < bytes.Length; i++)
-        {
-            Buffer.Set(startIndex + i, bytes[i]);
-        }
-        Count++; 
-        return startIndex + bytes.Length;
-    }
-
-    private int Record(int value, int startIndex)
+    public int Record(bool value, int startIndex)
     {
         var bytes = BitConverter.GetBytes(value);
         for (var i = 0; i < bytes.Length; i++)
@@ -85,7 +50,7 @@ public class NetworkBuffer<T> : INetworkStruct
         return startIndex + bytes.Length;
     }
 
-    private int Record(float value, int startIndex)
+    public int Record(int value, int startIndex)
     {
         var bytes = BitConverter.GetBytes(value);
         for (var i = 0; i < bytes.Length; i++)
@@ -95,35 +60,27 @@ public class NetworkBuffer<T> : INetworkStruct
         return startIndex + bytes.Length;
     }
 
-    public object GetValue(int index) 
+    public int Record(float value, int startIndex)
     {
-        if (currentType == typeof(bool))
+        var bytes = BitConverter.GetBytes(value);
+        for (var i = 0; i < bytes.Length; i++)
         {
-            return GetBool(index);
+            Buffer.Set(startIndex + i, bytes[i]);
         }
-        else if (currentType == typeof(int))
-        {
-            return GetInt(index);
-        }
-        else if (currentType == typeof(float))
-        {
-            return GetFloat(index);
-        }
-
-        return null;
+        return startIndex + bytes.Length;
     }
 
-    private bool GetBool(int index)
+    public bool GetBool(int index)
     {
         return BitConverter.ToBoolean(Buffer.ToArray(), index);
     }
 
-    private int GetInt(int index)
+    public int GetInt(int index)
     {
         return BitConverter.ToInt32(Buffer.ToArray(), index);
     }
 
-    private float GetFloat(int index)
+    public float GetFloat(int index)
     {
         return BitConverter.ToSingle(Buffer.ToArray(), index);
     }
