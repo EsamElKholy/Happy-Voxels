@@ -58,6 +58,7 @@ MonoBehaviour:
   - {fileID: 5279035057435729178, guid: d4a94a3c60acc44448f6e100ac0748be, type: 3}
   - {fileID: 5929950486996694602, guid: 54337e3e7779d7d43bf635dca1a818c0, type: 3}
   - {fileID: 2487744457468410609, guid: 267a1ec23aa880845a8afed56dd64a03, type: 3}
+  defaultAvatarType: 0
   characterInputHandler: {fileID: 6354592771839870229}
   fusionPlayerController: {fileID: 430598257792962392}
   fusionGunController: {fileID: 7754567140404390134}
@@ -187,7 +188,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c9450f6da27a064a9abd0cf47e3a4ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cameraSensitivity: {x: 200, y: 600}
+  cameraSensitivity: {x: 75, y: 100}
 --- !u!114 &6354592771839870229
 MonoBehaviour:
   m_ObjectHideFlags: 0

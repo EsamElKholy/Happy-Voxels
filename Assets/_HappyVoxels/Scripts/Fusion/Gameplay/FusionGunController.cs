@@ -68,6 +68,11 @@ public class FusionGunController : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_Shoot(Vector3 aim) 
     {
+        if (!fireParticles)
+        {
+            return;
+        }
+
         if (fireParticles.isPlaying)
         {
             fireParticles.Stop();

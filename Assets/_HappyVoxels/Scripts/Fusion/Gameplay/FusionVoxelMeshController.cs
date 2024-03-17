@@ -3,9 +3,7 @@ using Fusion;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
 
 public class FusionVoxelMeshController : NetworkBehaviour
 {
@@ -68,7 +66,10 @@ public class FusionVoxelMeshController : NetworkBehaviour
     public void Initialize(FusionPlayer player) 
     {
         this.player = player;
-        sphereAim = Instantiate(sphereAimPrefab);
+        if (!sphereAim)
+        {
+            sphereAim = Instantiate(sphereAimPrefab);
+        }
         sphereAim.SetActive(false);
 
         isInitialized = true;

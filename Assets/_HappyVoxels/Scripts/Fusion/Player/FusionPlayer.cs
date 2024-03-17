@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class FusionPlayer : NetworkBehaviour
 {
@@ -78,9 +77,10 @@ public class FusionPlayer : NetworkBehaviour
 
     public async UniTask ChangeAvatar(AvatarType avatarType) 
     {
-        await UniTask.DelayFrame(2);
+        await UniTask.WaitForSeconds(1);
         if (avatarType == AvatarType.NONE)
         {
+            Debug.Log("FUCK");
             return;
         }
 

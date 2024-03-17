@@ -27,6 +27,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f7d34245211a4d94ea75eb99cc4a6c36
+    m_Address: Assets/_HappyVoxels/Art/Models/Shin G render.obj
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 996c4ae5a917fa744b6347ac61ae3ea6
+    m_Address: Assets/_HappyVoxels/Prefabs
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: a776cbdf0da280e4b98cb2ba996842f4, type: 2}
   m_SchemaSet:
