@@ -35,22 +35,6 @@ struct Varyings
     float4 positionCS               : SV_POSITION;
 };
 
-struct GeometryData
-{
-	float2 uv : TEXCOORD0;
-#if LIGHTMAP_ON
-    float2 uvLightmap               : TEXCOORD1;
-#endif
-	float3 positionWS : TEXCOORD2;
-	half3 normalWS : TEXCOORD3;
-
-#ifdef _NORMALMAP
-    half4 tangentWS                 : TEXCOORD4;
-#endif
-    
-	float4 vertex : POSITION;
-};
-
 // User defined surface data.
 struct CustomSurfaceData
 {
@@ -146,6 +130,16 @@ half3 EnvironmentBRDF(half3 f0, half roughness, half NdotV)
 #endif
 }
 
+void Slice(float4 plane, float3 fragPos)
+{
+	float distance = dot(fragPos.xyz, plane.xyz) + plane.w;
+
+	if (distance > 0)
+	{
+		discard;
+	}
+}
+
 #ifdef CUSTOM_LIGHTING_FUNCTION
     half4 CUSTOM_LIGHTING_FUNCTION(CustomSurfaceData surfaceData, _LightingData lightingData);
 #else
@@ -176,10 +170,9 @@ half4 CUSTOM_LIGHTING_FUNCTION(CustomSurfaceData surfaceData, _LightingData ligh
     }
 #endif
 
-GeometryData SurfaceVertex(Attributes IN)
+Varyings SurfaceVertex(Attributes IN)
 {
-	GeometryData OUT;
-
+	Varyings OUT;
     // VertexPositionInputs contains position in multiple spaces (world, view, homogeneous clip space)
     // The compiler will strip all unused references.
     // Therefore there is more flexibility at no additional cost with this struct.
@@ -204,116 +197,8 @@ GeometryData SurfaceVertex(Attributes IN)
     OUT.tangentWS = float4(vertexNormalInput.tangentWS, IN.tangentOS.w * GetOddNegativeScale());
 #endif
 
-	OUT.vertex = IN.positionOS;
-    return OUT;
-}
-
-[maxvertexcount(36)]
-void GeometryProgram(point GeometryData IN[1], inout TriangleStream<Varyings> triStream)
-{
-	float f = _VoxelSize / 2;
-
-	const float4 vc[36] =
-	{
-		float4(-f, f, f, 0.0f), float4(f, f, f, 0.0f), float4(f, f, -f, 0.0f), //Top                                 
-		float4(f, f, -f, 0.0f), float4(-f, f, -f, 0.0f), float4(-f, f, f, 0.0f), //Top
-
-		float4(f, f, -f, 0.0f), float4(f, f, f, 0.0f), float4(f, -f, f, 0.0f), //Right
-		float4(f, -f, f, 0.0f), float4(f, -f, -f, 0.0f), float4(f, f, -f, 0.0f), //Right
-
-		float4(-f, f, -f, 0.0f), float4(f, f, -f, 0.0f), float4(f, -f, -f, 0.0f), //Front
-		float4(f, -f, -f, 0.0f), float4(-f, -f, -f, 0.0f), float4(-f, f, -f, 0.0f), //Front
-
-		float4(-f, -f, -f, 0.0f), float4(f, -f, -f, 0.0f), float4(f, -f, f, 0.0f), //Bottom                                         
-		float4(f, -f, f, 0.0f), float4(-f, -f, f, 0.0f), float4(-f, -f, -f, 0.0f), //Bottom
-
-		float4(-f, f, f, 0.0f), float4(-f, f, -f, 0.0f), float4(-f, -f, -f, 0.0f), //Left
-		float4(-f, -f, -f, 0.0f), float4(-f, -f, f, 0.0f), float4(-f, f, f, 0.0f), //Left
-
-		float4(-f, f, f, 0.0f), float4(-f, -f, f, 0.0f), float4(f, -f, f, 0.0f), //Back
-		float4(f, -f, f, 0.0f), float4(f, f, f, 0.0f), float4(-f, f, f, 0.0f) //Back
-	};
-
-	const int TRI_STRIP[36] =
-	{
-		0, 1, 2, 3, 4, 5,
-		6, 7, 8, 9, 10, 11,
-		12, 13, 14, 15, 16, 17,
-		18, 19, 20, 21, 22, 23,
-		24, 25, 26, 27, 28, 29,
-		30, 31, 32, 33, 34, 35
-	};
-
-	float3 normals[36];
-	int i;
-	for (i = 0; i < 36; i++)
-	{
-		normals[i] = float3(0, 0, 0);
-	}
-
-	for (i = 0; i < 36; i += 3)
-	{
-		int i0 = TRI_STRIP[i + 0];
-		int i1 = TRI_STRIP[i + 1];
-		int i2 = TRI_STRIP[i + 2];
-
-		float3 v1 = vc[i1] - vc[i0];
-		float3 v2 = vc[i2] - vc[i0];
-
-		float3 normal = cross(v1, v2);
-		normal = normalize(normal);
-
-		normals[i0] += normal;
-		normals[i1] += normal;
-		normals[i2] += normal;
-	}
-
-	Varyings v[36];
-    
-	for (i = 0; i < 36; i++)
-	{
-		normals[i] = normalize(normals[i]);
-        
-		v[i].positionWS = IN[0].vertex + vc[i];
-		v[i].normalWS = normals[i];
-	}
-    
-	// Assign new vertices positions 
-	for (i = 0; i < 36; i++)
-	{
-		v[i].positionWS = TransformObjectToWorld((IN[0].vertex + vc[i]).xyz);
-		v[i].positionCS = TransformObjectToHClip((IN[0].vertex + vc[i]).xyz);
-		v[i].normalWS = TransformObjectToWorldNormal(normals[i]);
-		v[i].uv = IN[0].uv;
-		//v[i].uv = v[i].positionCS.xy;
-        
-#if LIGHTMAP_ON
-		v[i].uvLightmap = IN[0].uvLightmap;
-#endif
-#ifdef _NORMALMAP
-		v[i].tangentWS = IN[0].tangentWS;
-#endif        
-	}
-	
-	// Position in view space
-	//for (i = 0; i < 36; i++)
-	//{
-	//	v[i].positionWS = mul(UNITY_MATRIX_M, v[i].pos);
-	//	v[i].positionCS = UnityObjectToClipPos(v[i].pos);
-	//	//v[i].normalOS = UnityObjectToWorldNormal(v[i].normal);
-
-	//	//TRANSFER_SHADOW(v[i]);
-	//}
-
-	// Build the cube tile by submitting triangle strip vertices
-	for (i = 0; i < 36 / 3; i++)
-	{
-		triStream.Append(v[TRI_STRIP[i * 3 + 0]]);
-		triStream.Append(v[TRI_STRIP[i * 3 + 1]]);
-		triStream.Append(v[TRI_STRIP[i * 3 + 2]]);
-
-		triStream.RestartStrip();
-	}
+	OUT.positionCS = vertexInput.positionCS;
+	return OUT;
 }
 
 half4 SurfaceFragment(Varyings IN) : SV_Target
@@ -340,7 +225,9 @@ half4 SurfaceFragment(Varyings IN) : SV_Target
     lightingData.NdotV = saturate(dot(surfaceData.normalWS, lightingData.viewDirectionWS)) + HALF_MIN;
     lightingData.NdotH = saturate(dot(surfaceData.normalWS, lightingData.halfDirectionWS));
     lightingData.LdotH = saturate(dot(lightingData.light.direction, lightingData.halfDirectionWS));
-
+#ifdef _SLICING
+	Slice(_SlicingPlane, IN.positionWS.xyz);
+#endif
     return CUSTOM_LIGHTING_FUNCTION(surfaceData, lightingData);
 }
 

@@ -7,9 +7,9 @@ using UnityEngine;
 public class VoxelOctree 
 {
     public TreeNode[] Nodes;
-    public Vector3[] VoxelUVs;
+    //public Vector3[] VoxelUVs;
     public List<TreeNode> FilledNodes = new List<TreeNode>();
-    public List<Vector2> FilledNodesUVs = new List<Vector2>();
+    //public List<Vector2> FilledNodesUVs = new List<Vector2>();
     public int MaxDepth;
     public float MaxSize;
     public int NodeCount;
@@ -24,7 +24,7 @@ public class VoxelOctree
         }
         NodeCount = s;
         Nodes = new TreeNode[NodeCount];
-        VoxelUVs = Enumerable.Repeat(new Vector3(-999, -999, -1), NodeCount).ToArray();
+        //VoxelUVs = Enumerable.Repeat(new Vector3(-999, -999, -1), NodeCount).ToArray();
 
         TreeNode root = new TreeNode()
         {
@@ -62,11 +62,11 @@ public class VoxelOctree
         Nodes[0] = (root);
     }
 
-    public void Dispose() 
-    {
-        VoxelUVs = null;
-        Nodes = null;
-    }
+    //public void Dispose() 
+    //{
+    //    VoxelUVs = null;
+    //    Nodes = null;
+    //}
 
     public void BuildFullTree()
     {
@@ -371,19 +371,19 @@ public class VoxelOctree
         }
     }
     
-    public void ActivateUVAt(int[] index, bool active) 
-    {        
-        for (int i = 0; i < VoxelUVs.Length; i++)
-        {
-            for (int j = 0; j < index.Length; j++)
-            {
-                if ((int)Mathf.Abs(VoxelUVs[i].z) == index[j])
-                {
-                    VoxelUVs[i].z = (int)Mathf.Abs(VoxelUVs[i].z) * (active ? 1 : -1);
-                }
-            }            
-        }
-    }
+    //public void ActivateUVAt(int[] index, bool active) 
+    //{        
+    //    for (int i = 0; i < VoxelUVs.Length; i++)
+    //    {
+    //        for (int j = 0; j < index.Length; j++)
+    //        {
+    //            if ((int)Mathf.Abs(VoxelUVs[i].z) == index[j])
+    //            {
+    //                VoxelUVs[i].z = (int)Mathf.Abs(VoxelUVs[i].z) * (active ? 1 : -1);
+    //            }
+    //        }            
+    //    }
+    //}
 
     public List<TreeNode> GetFilledNodes(bool recalculate = false)
     {

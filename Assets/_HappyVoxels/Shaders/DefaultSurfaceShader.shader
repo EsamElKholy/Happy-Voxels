@@ -1,6 +1,6 @@
-﻿Shader"Universal Render Pipeline/Custom/VoxelLit"
+Shader "Custom/DefaultSurfaceShader"
 {
-    // TODO: I need to support custom shader inspector for this to hide
+   // TODO: I need to support custom shader inspector for this to hide
     // scale/offset for normal map using NoScaleOffset.
     Properties
     {
@@ -24,9 +24,7 @@
 
         [Header(Emission)]
         [HDR]_Emission("Emission Color", Color) = (0,0,0,1)
-
-        [Header(Voxels)]
-        _VoxelSize("Voxel Size", float) = 0
+       
         _OptionalColorIntensity("Optional Color Intensity", float) = 1
 
         [Header(Slicing)]
@@ -47,6 +45,7 @@
         // Material variables. They need to be declared in UnityPerMaterial
         // to be able to be cached by SRP Batcher
         CBUFFER_START(UnityPerMaterial)
+
         float4 _BaseMap_ST;
         half4 _BaseColor;
         half _Metallic;
@@ -73,7 +72,6 @@
             #pragma shader_feature _SLICING
 
             #pragma vertex SurfaceVertex
-            #pragma geometry GeometryProgram
             #pragma fragment SurfaceFragment
             
             // -------------------------------------
@@ -86,7 +84,7 @@
 
             // -------------------------------------
             // Include custom shading helper to create vertex and fragment functions
-            #include "Assets/_HappyVoxels/Shaders/CustomShadingWithGeometry.hlsl"
+            #include "Assets/_HappyVoxels/Shaders/CustomShading.hlsl"
 
             // -------------------------------------
             // Textures are declared in global scope
@@ -103,18 +101,18 @@
 	            half3 baseColor = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv).rgb * _BaseColor.rgb;
 	            half4 metallicSmoothness = SAMPLE_TEXTURE2D(_MetallicSmoothnessMap, sampler_BaseMap, uv);
 	            half metallic = _Metallic * metallicSmoothness.r;
-                            // diffuse color is black for metals and baseColor for dieletrics
+                                        // diffuse color is black for metals and baseColor for dieletrics
 	            surfaceData.diffuse = ComputeDiffuseColor(baseColor.rgb * _OptionalColorIntensity, metallic);
 
-                            // f0 is reflectance at normal incidence. we store f0 in baseColor for metals.
-                            // for dieletrics f0 is monochromatic and stored in reflectance value.
-                            // Remap reflectance to range [0, 1] - 0.5 maps to 4%, 1.0 maps to 16% (gemstone)
-                            // https://google.github.io/filament/Filament.html#materialsystem/parameterization/standardparameters
+                                        // f0 is reflectance at normal incidence. we store f0 in baseColor for metals.
+                                        // for dieletrics f0 is monochromatic and stored in reflectance value.
+                                        // Remap reflectance to range [0, 1] - 0.5 maps to 4%, 1.0 maps to 16% (gemstone)
+                                        // https://google.github.io/filament/Filament.html#materialsystem/parameterization/standardparameters
 	            surfaceData.reflectance = ComputeFresnel0(baseColor.rgb, metallic, _Reflectance * _Reflectance * 0.16);
 	            surfaceData.ao = SAMPLE_TEXTURE2D(_AmbientOcclusionMap, sampler_BaseMap, uv).g * _AmbientOcclusion;
 	            surfaceData.perceptualRoughness = 1.0 - (_Smoothness * metallicSmoothness.a);
             #ifdef _NORMALMAP
-                            surfaceData.normalWS = GetPerPixelNormalScaled(TEXTURE2D_ARGS(_NormalMap, sampler_NormalMap), uv, IN.normalWS, IN.tangentWS, _NormalMapScale);
+                                        surfaceData.normalWS = GetPerPixelNormalScaled(TEXTURE2D_ARGS(_NormalMap, sampler_NormalMap), uv, IN.normalWS, IN.tangentWS, _NormalMapScale);
             #else
 	            surfaceData.normalWS = normalize(IN.normalWS);
             #endif

@@ -37,16 +37,16 @@ RWStructuredBuffer<VoxelOctreeNode> VoxelOctreeBuffer;
 RWStructuredBuffer<float3> VertexBuffer;
 	
 RWStructuredBuffer<float3> voxelUVsBuffer;
-RWStructuredBuffer<float2> UVsBuffer;
+//RWStructuredBuffer<float2> UVsBuffer;
 	
 RWStructuredBuffer<int> IndexBuffer;
 
 RWStructuredBuffer<float3> OutVerticesBuffer;
-AppendStructuredBuffer<float2> OutUVsBuffer;
+//AppendStructuredBuffer<float2> OutUVsBuffer;
 RWStructuredBuffer<int> OutIndicesBuffer;
 
 AppendStructuredBuffer<VoxelOctreeNode> FilledVoxelPositionsBuffer;
-AppendStructuredBuffer<float2> FilledVoxelUVsBuffer;
+//AppendStructuredBuffer<float2> FilledVoxelUVsBuffer;
 
 RWStructuredBuffer<VoxelOctreeNode> _FilledVoxelPositionsBuffer;
 int FilledVoxelsCount;
@@ -451,7 +451,7 @@ void FillTree(uint3 id : SV_DispatchThreadID)
 				{
 					VoxelOctreeBuffer[j].Value = 1;
 						
-					voxelUVsBuffer[j] = float3((UVsBuffer[i0] + UVsBuffer[i1] + UVsBuffer[i2]) / 3, j);
+					//voxelUVsBuffer[j] = float3((UVsBuffer[i0] + UVsBuffer[i1] + UVsBuffer[i2]) / 3, j);
 				}
 			}
 
@@ -472,25 +472,25 @@ void GetFilledVoxels(uint3 id : SV_DispatchThreadID)
 		return;
 	}
 
-	if (VoxelOctreeBuffer[id.x].Value == 1)
+	if (VoxelOctreeBuffer[id.x].Value > 0)
 	{
 		FilledVoxelPositionsBuffer.Append(VoxelOctreeBuffer[id.x]);
 	}
 }
 	
-[numthreads(64, 1, 1)]
-void GetFilledVoxelsUVs(uint3 id : SV_DispatchThreadID)
-{		
-	if (id.x >= VoxelCount)
-	{
-		return;
-	}
-	int index = id.x;
-	if (voxelUVsBuffer[index].z >= 0)
-	{
-		FilledVoxelUVsBuffer.Append(voxelUVsBuffer[index].xy);
-	}
-}
+//[numthreads(64, 1, 1)]
+//void GetFilledVoxelsUVs(uint3 id : SV_DispatchThreadID)
+//{		
+//	if (id.x >= VoxelCount)
+//	{
+//		return;
+//	}
+//	int index = id.x;
+//	if (voxelUVsBuffer[index].z >= 0)
+//	{
+//		FilledVoxelUVsBuffer.Append(voxelUVsBuffer[index].xy);
+//	}
+//}
 
 [numthreads(64, 1, 1)]
 void DisableVoxelsInSphere(uint3 id : SV_DispatchThreadID)
@@ -639,7 +639,6 @@ void ConstructMesh1(uint3 id : SV_DispatchThreadID)
 	int count = id.x;
 
 	float3 pos = _FilledVoxelPositionsBuffer[count].Position;
-	float3 size = _FilledVoxelPositionsBuffer[count].Size * float3(1, 1, 1);
 
 	OutVerticesBuffer[count] = _FilledVoxelPositionsBuffer[count].Position;
 	

@@ -212,6 +212,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 464cd49e00d92d54d83a429cf2eca8d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sphereCastRaduis: 3
+  sphereCastRaduis: 4.5
   sphereAimPrefab: {fileID: 7575138309247321375, guid: 87a79e567f820a04487e8c35e176fa20,
     type: 3}

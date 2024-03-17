@@ -19,7 +19,7 @@ public class FusionVoxelMeshController : NetworkBehaviour
 
     private VoxelMeshScene voxelMeshScene;
 
-    private List<Vector4> removedVoxels = new();
+    private List<Vector4> editedVoxels = new();
     private GameObject sphereAim;
 
     private bool isInitialized = false;
@@ -133,16 +133,18 @@ public class FusionVoxelMeshController : NetworkBehaviour
                                 if (networkInputData.isSphereDisabling)
                                 {
                                     Vector4 data = new Vector4(voxelMeshScene.GetMeshVoxelizerIndex(meshVoxelizer), closestNode.index, sphereCastRaduis, -1);
-                                    removedVoxels.Add(data);
+                                    editedVoxels.Add(data);
                                     RPC_EditVoxels(data);
                                     isEditing = true;
                                 }
 
-                                //if (networkInputData.isSphereDisabling)
-                                //{
-                                //    meshVoxelizer.EnableNodesInSphere(closestNode, sphereCastRaduis, false);
-                                //    isEditing = true;
-                                //}
+                                if (networkInputData.isSphereEnabling)
+                                {
+                                    Vector4 data = new Vector4(voxelMeshScene.GetMeshVoxelizerIndex(meshVoxelizer), closestNode.index, sphereCastRaduis, 1);
+                                    editedVoxels.Add(data);
+                                    RPC_EditVoxels(data);
+                                    isEditing = true;
+                                }
                             }                           
                         }
                     }
@@ -225,12 +227,12 @@ public class FusionVoxelMeshController : NetworkBehaviour
     {
         await UniTask.WaitForSeconds(3);
         List<float> data = new List<float>();
-        for (int i = 0; i < removedVoxels.Count; i++)
+        for (int i = 0; i < editedVoxels.Count; i++)
         {
-            data.Add(removedVoxels[i].x);
-            data.Add(removedVoxels[i].y);
-            data.Add(removedVoxels[i].z);
-            data.Add(removedVoxels[i].w);
+            data.Add(editedVoxels[i].x);
+            data.Add(editedVoxels[i].y);
+            data.Add(editedVoxels[i].z);
+            data.Add(editedVoxels[i].w);
         }
 
         int counter = 0;
@@ -256,7 +258,6 @@ public class FusionVoxelMeshController : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_SendEditData([RpcTarget] PlayerRef player, NetworkBuffer data, int dataCount) 
     {
-        //Debug.LogError($"data count {dataCount}");
         Vector4 editData = Vector4.zero;
         int counter = 0;
         for (int j = 0; j < dataCount; j++)
@@ -270,7 +271,12 @@ public class FusionVoxelMeshController : NetworkBehaviour
             var f = data.GetFloat(j * sizeof(float));
             editData[counter++] = f;
         }
-        EditVoxels(editData);
+
+        if (!editedVoxels.Contains(editData))
+        {
+            editedVoxels.Add(editData);
+            EditVoxels(editData);
+        }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -281,11 +287,16 @@ public class FusionVoxelMeshController : NetworkBehaviour
 
     private void EditVoxels(Vector4 data) 
     {
-        //Debug.LogError($"voxelizer index {data.x}, closest node index {data.y}");
-
         MeshVoxelizer meshVoxelizer = voxelMeshScene.GetMeshVoxelizerAtIndex((int)data.x);
         TreeNode closestNode = meshVoxelizer.GetNodeAt((int)data.y);
-
-        meshVoxelizer.DisableNodesInSphere(closestNode, (int)data.z, false);
+        bool disable = data.w < 0;
+        if (disable) 
+        {
+            meshVoxelizer.DisableNodesInSphere(closestNode, (int)data.z);
+        }
+        else
+        {
+            meshVoxelizer.EnableNodesInSphere(closestNode, (int)data.z);
+        }
     }
 }
