@@ -60,6 +60,7 @@ public class MeshVoxelizer : MonoBehaviour
 
     private bool isVoxelized = false;
     private int currentDepth = 0;
+    private Deform deform;
 
     private void Awake()
     {
@@ -128,6 +129,11 @@ public class MeshVoxelizer : MonoBehaviour
             renderer = GetComponent<MeshRenderer>();
         }
 
+        if (!deform)
+        {
+            deform = GetComponentInChildren<Deform>();
+        }
+
         voxelMeshFilter.mesh = voxelMesh;        
 
         Material[] copyMaterials = new Material[geometryMaterials.Count];
@@ -178,6 +184,11 @@ public class MeshVoxelizer : MonoBehaviour
         }
 
         transform.GetChild(0).gameObject.SetActive(false);
+
+        if (deform)
+        {
+            deform.StartAnimation().Forget();
+        }
     }
 
     [Button]

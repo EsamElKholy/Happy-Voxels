@@ -13,6 +13,10 @@ public class CharacterInputHandler : MonoBehaviour
     private bool isSphereEnabling = false;
     private bool isSphereDisabling = false;
 
+    private bool changeToRed = false;
+    private bool changeToGreen = false;
+    private bool changeToBlue = false;
+
     private void OnDestroy()
     {
         if (isInitialized)
@@ -60,6 +64,36 @@ public class CharacterInputHandler : MonoBehaviour
         {
             isSphereEnabling = false;
         }
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            changeToRed = true;
+        }
+
+        if (Input.GetKeyUp(KeyCode.R))
+        {
+            changeToRed = false;
+        }
+
+        if (Input.GetKeyDown(KeyCode.G))
+        {
+            changeToGreen = true;
+        }
+
+        if (Input.GetKeyUp(KeyCode.G))
+        {
+            changeToGreen = false;
+        }
+
+        if (Input.GetKeyDown(KeyCode.B))
+        {
+            changeToBlue = true;
+        }
+
+        if (Input.GetKeyUp(KeyCode.B))
+        {
+            changeToBlue = false;
+        }
     }
 
     private void OnPlayerInput(NetworkRunner runner, NetworkInput input)
@@ -76,6 +110,10 @@ public class CharacterInputHandler : MonoBehaviour
         networkInputData.isFiring = isFiring;
         networkInputData.isSphereEnabling = isSphereEnabling;
         networkInputData.isSphereDisabling = isSphereDisabling;
+
+        networkInputData.changeToRed = changeToRed;
+        networkInputData.changeToGreen = changeToGreen;
+        networkInputData.changeToBlue = changeToBlue;
 
         return networkInputData;
     }

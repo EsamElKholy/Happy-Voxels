@@ -32,6 +32,9 @@
         [Header(Slicing)]
         [Toggle(_SLICING)] _EnableSlicing("Enable Slicing", Float) = 0.0
         _SlicingPlane("Slicing Plane", Vector) = (0, 0, 0, 0)
+
+        _CenterPivot("Center Pivot", Vector) = (0, 0, 0, 0)
+		_DeformFactor("Deform Factor", Float) = 1
     }
 
     SubShader
@@ -58,6 +61,9 @@
         float _VoxelSize;
         float _OptionalColorIntensity;
         float4 _SlicingPlane;
+        float4 _CenterPivot;
+        float _DeformFactor;
+
         CBUFFER_END
 
         ENDHLSL

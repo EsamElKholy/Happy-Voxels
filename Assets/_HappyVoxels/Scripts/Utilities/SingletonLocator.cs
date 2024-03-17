@@ -27,6 +27,7 @@ public class SingletonLocator : MonoBehaviour
         ClearInstanceExistDictionary();
 
         Instance = this;
+        Application.runInBackground = true;
     }
 
     public bool HasInstance<T>() where T : Component

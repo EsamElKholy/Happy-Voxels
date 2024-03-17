@@ -31,6 +31,11 @@ public class FusionGunController : NetworkBehaviour
         }
     }
 
+    public void Pause()
+    {
+        isInitialized = false;
+    }
+
     public override void FixedUpdateNetwork()
     {
         base.FixedUpdateNetwork();

@@ -20,17 +20,22 @@ public class Debug_FusionPlayer : MonoBehaviour
     {
         avatarType = fusionPlayer.CurrentAvatarType;
 
-        ChangeAfterDelay().Forget();
+        //if (fusionPlayer.HasStateAuthority)
+        //{
+        //    ChangeAfterDelay().Forget();
+
+        //}
     }
 
     private async UniTask ChangeAfterDelay() 
     {
-        await UniTask.WaitForSeconds(0.5f);
+        await UniTask.WaitForSeconds(1);
         avatarType = fusionPlayer.CurrentAvatarType;
 
         fusionPlayer.Debug_ChangeDefaultAvatarType(avatarType:AvatarType.Default);
-        await UniTask.DelayFrame(1);
-        fusionPlayer.Debug_ChangeDefaultAvatarType(avatarType);
+        await UniTask.DelayFrame(2);
+        //List<AvatarType> avatarTypes = new List<AvatarType>() { AvatarType.Red, AvatarType.Green, AvatarType.Blue };
+        //fusionPlayer.Debug_ChangeDefaultAvatarType(avatarTypes[UnityEngine.Random.Range(0, avatarTypes.Count)]);
     }
 
     private void AvatarTypeChanged()

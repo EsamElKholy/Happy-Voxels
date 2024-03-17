@@ -10,4 +10,8 @@ public struct NetworkInputData : INetworkInput
 
     public bool isSphereEnabling;
     public bool isSphereDisabling;
+
+    public bool changeToRed;
+    public bool changeToGreen;
+    public bool changeToBlue;
 }

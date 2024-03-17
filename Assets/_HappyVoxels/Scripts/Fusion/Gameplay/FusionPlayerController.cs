@@ -20,6 +20,7 @@ public class FusionPlayerController : NetworkBehaviour
     private bool isInitialized = false;
     private FusionPlayer fusionPlayer;
     private float verticalVelocity;
+    private FusionPlayer player;
 
     public override void Spawned()
     {
@@ -31,10 +32,11 @@ public class FusionPlayerController : NetworkBehaviour
         }
     }
 
-    public void Initialize() 
+    public void Initialize(FusionPlayer player) 
     {       
         characterController.Move(transform.position);
         fusionPlayer = GetComponent<FusionPlayer>();
+        this.player = player;
         isInitialized = true;
     }
 
@@ -66,6 +68,24 @@ public class FusionPlayerController : NetworkBehaviour
             Vector3 move = new Vector3(networkInputData.movementInput.x, verticalVelocity, networkInputData.movementInput.y) * Runner.DeltaTime * playerSpeed;
 
             characterController.Move(transform.TransformDirection(move));
+
+            if (HasStateAuthority)
+            {
+                if (networkInputData.changeToRed)
+                {
+                    player.Debug_ChangeDefaultAvatarType(AvatarType.Red);
+                }
+
+                if (networkInputData.changeToGreen)
+                {
+                    player.Debug_ChangeDefaultAvatarType(AvatarType.Green);
+                }
+
+                if (networkInputData.changeToBlue)
+                {
+                    player.Debug_ChangeDefaultAvatarType(AvatarType.Blue);
+                }
+            }            
         }
 
         CheckRespawn();

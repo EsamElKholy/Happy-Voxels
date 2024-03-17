@@ -77,14 +77,22 @@ public class FusionVoxelMeshController : NetworkBehaviour
 
     private void OnVoxelStateChanged() 
     {
+        UpdateVoxelState().Forget();
+    }
+
+    private async UniTask UpdateVoxelState() 
+    {
+        await UniTask.WaitUntil(() => { return voxelMeshScene && voxelMeshScene.IsInitialized && Object && Object.IsValid; });
+
+        await UniTask.DelayFrame(1);
         if (voxelMeshScene)
         {
-            foreach (var state in VoxelStates) 
+            foreach (var state in VoxelStates)
             {
-                var controller = voxelMeshScene.GetMeshVoxelizerController(state.Key);            
+                var controller = voxelMeshScene.GetMeshVoxelizerController(state.Key);
                 if (state.Value)
                 {
-                    controller.Voxelize(); 
+                    controller.Voxelize().Forget();
                 }
                 else
                 {

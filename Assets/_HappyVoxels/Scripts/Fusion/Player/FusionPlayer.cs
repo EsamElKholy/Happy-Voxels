@@ -36,7 +36,7 @@ public class FusionPlayer : NetworkBehaviour
     #region NetworkedProperties
     [HideInInspector]
     [Networked, OnChangedRender(nameof(OnCurrentAvatarTypeChanged))]
-    public AvatarType CurrentAvatarType { get; private set; } = AvatarType.NONE;
+    public AvatarType CurrentAvatarType { get; set; } = AvatarType.NONE;
     #endregion
    
     
@@ -66,7 +66,7 @@ public class FusionPlayer : NetworkBehaviour
             }
 
             characterInputHandler.Initialize();
-            fusionPlayerController.Initialize();
+            fusionPlayerController.Initialize(this);
             CurrentAvatarType = defaultAvatarType;            
         }
         else
@@ -80,7 +80,6 @@ public class FusionPlayer : NetworkBehaviour
         await UniTask.WaitForSeconds(1);
         if (avatarType == AvatarType.NONE)
         {
-            Debug.Log("FUCK");
             return;
         }
 
@@ -105,18 +104,18 @@ public class FusionPlayer : NetworkBehaviour
             InitializeCamera();
         }
 
-        if (!gun)
-        {
-            SpawnGun();
-        }
+        SpawnGun();
     }
 
     private void InitializeCamera() 
     {
-        if (!localCamera)
+        fusionCameraController.Pause();
+        if (localCamera)
         {
-            localCamera = Instantiate(cameraPrefab, transform);
+            Destroy(localCamera.gameObject);
         }
+
+        localCamera = Instantiate(cameraPrefab, transform);
 
         currentAvatar.GunSpawnLocation.SetParent(localCamera.transform);
 
@@ -128,10 +127,14 @@ public class FusionPlayer : NetworkBehaviour
 
     private void SpawnGun() 
     {
-        if (!gun)
+        fusionGunController.Pause();
+
+        if (gun)
         {
-            gun = Instantiate(gunPrefab, currentAvatar.GunSpawnLocation);
+            Destroy(gun.gameObject);
         }
+
+        gun = Instantiate(gunPrefab, currentAvatar.GunSpawnLocation);
 
         fusionGunController.Initialize(gun);       
     }

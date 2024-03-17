@@ -30,17 +30,20 @@ public class MeshVoxelizerController : MonoBehaviour
     private int[] totalVoxelCounts;
 
     public string VoxelizerName { get { return voxelizerName; } }
+    private bool isInitialized = false;
 
     private void Awake()
     {
         voxelizersInChildren = GetComponentsInChildren<MeshVoxelizer>();
         filledVoxelCounts = new int[voxelizersInChildren.Length];
         totalVoxelCounts = new int[voxelizersInChildren.Length];
+        isInitialized = true;
     }
 
     [Button]
-    public void Voxelize() 
+    public async UniTask Voxelize() 
     {
+        await UniTask.WaitUntil(() => { return isInitialized; });
         totalVoxels = 0;
         totalFilledVoxels = 0;
 

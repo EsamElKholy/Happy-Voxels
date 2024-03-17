@@ -15,6 +15,8 @@ public class VoxelMeshScene : MonoBehaviour
 
     private List<MeshVoxelizer> meshVoxelizers = new List<MeshVoxelizer>();
 
+    public bool IsInitialized { get; private set; }
+
     public bool StartVoxelized { get { return startVoxelized; } }
 
     private void Awake()
@@ -32,6 +34,8 @@ public class VoxelMeshScene : MonoBehaviour
                 meshVoxelizers.AddRange(voxelController.GetComponentsInChildren<MeshVoxelizer>());
             }
         }
+
+        IsInitialized = true;
     }
 
     public MeshVoxelizerController GetMeshVoxelizerController(string name) 

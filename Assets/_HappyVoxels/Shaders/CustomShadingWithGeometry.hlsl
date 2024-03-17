@@ -216,6 +216,9 @@ GeometryData SurfaceVertex(Attributes IN)
     OUT.tangentWS = float4(vertexNormalInput.tangentWS, IN.tangentOS.w * GetOddNegativeScale());
 #endif
 
+	float3 dir = IN.positionOS.xyz - _CenterPivot.xyz;
+	dir = normalize(dir);
+	IN.positionOS.xyz = IN.positionOS.xyz + dir * _DeformFactor;
 	OUT.vertex = IN.positionOS;
 
 	return OUT;

@@ -73,7 +73,7 @@ public class Slicer : MonoBehaviour
             UpdateMaterials();
             await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: this.GetCancellationTokenOnDestroy());
         }
-        OnFinishedSlicing?.Invoke();
+        OnFinishedSlicing?.Invoke();       
     }
 
     public Vector4 GetEquation()
