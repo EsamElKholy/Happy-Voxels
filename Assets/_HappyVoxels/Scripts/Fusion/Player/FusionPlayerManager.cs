@@ -11,7 +11,7 @@ public class FusionPlayerManager : SimulationBehaviour
     private NetworkRunner runner;
 
     [SerializeField]
-    private NetworkPrefabRef playerPrefab;
+    private List<NetworkPrefabRef> playerPrefabs = new List<NetworkPrefabRef>();
 
     private Dictionary<PlayerRef, FusionPlayer> spawnedPlayer = new();
     public Action<PlayerRef> OnAnotherPlayerJoined;
@@ -57,7 +57,8 @@ public class FusionPlayerManager : SimulationBehaviour
         if (!spawnedPlayer.ContainsKey(player)) 
         {
             if (player == runner.LocalPlayer)
-            {         
+            {
+                var playerPrefab = playerPrefabs[UnityEngine.Random.Range(0, playerPrefabs.Count)];
                 var obj = runner.Spawn(playerPrefab, inputAuthority: player, onBeforeSpawned: (runner, obj) =>
                 {
                     var fusionPlayer = obj.GetComponent<FusionPlayer>();

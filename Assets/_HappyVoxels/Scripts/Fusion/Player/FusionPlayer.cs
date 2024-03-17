@@ -3,6 +3,7 @@ using Fusion;
 using NaughtyAttributes;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -11,6 +12,9 @@ public class FusionPlayer : NetworkBehaviour
     #region SerializedFields
     [SerializeField]
     private List<PlayerAvatar> avatarPrefabs = new();
+
+    [SerializeField]
+    private AvatarType defaultAvatarType = AvatarType.Default;
 
     [SerializeField]
     private CharacterInputHandler characterInputHandler;
@@ -39,7 +43,6 @@ public class FusionPlayer : NetworkBehaviour
     
     public int PlayerIndex { get; private set; } = -1;   
     private PlayerAvatar currentAvatar;
-    private AvatarType defaultAvatarType = AvatarType.Default;
     private GameObject gun;
     private Camera localCamera;
 
@@ -65,16 +68,17 @@ public class FusionPlayer : NetworkBehaviour
 
             characterInputHandler.Initialize();
             fusionPlayerController.Initialize();
-            CurrentAvatarType = defaultAvatarType;
+            CurrentAvatarType = defaultAvatarType;            
         }
         else
         {
-            ChangeAvatar(CurrentAvatarType);
+            ChangeAvatar(CurrentAvatarType).Forget();
         }
     }
 
-    public void ChangeAvatar(AvatarType avatarType) 
+    public async UniTask ChangeAvatar(AvatarType avatarType) 
     {
+        await UniTask.DelayFrame(2);
         if (avatarType == AvatarType.NONE)
         {
             return;
@@ -109,7 +113,10 @@ public class FusionPlayer : NetworkBehaviour
 
     private void InitializeCamera() 
     {
-        localCamera = Instantiate(cameraPrefab, transform);
+        if (!localCamera)
+        {
+            localCamera = Instantiate(cameraPrefab, transform);
+        }
 
         currentAvatar.GunSpawnLocation.SetParent(localCamera.transform);
 
@@ -121,14 +128,17 @@ public class FusionPlayer : NetworkBehaviour
 
     private void SpawnGun() 
     {
-        gun = Instantiate(gunPrefab, currentAvatar.GunSpawnLocation);
+        if (!gun)
+        {
+            gun = Instantiate(gunPrefab, currentAvatar.GunSpawnLocation);
+        }
 
-        fusionGunController.Initialize(gun);
+        fusionGunController.Initialize(gun);       
     }
 
     private void OnCurrentAvatarTypeChanged()
     {
-        ChangeAvatar(CurrentAvatarType);
+        ChangeAvatar(CurrentAvatarType).Forget();
     }
 
     #region RPC
