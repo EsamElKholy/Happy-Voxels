@@ -32,9 +32,14 @@ public class CharacterInputHandler : MonoBehaviour
 
     private void Update()
     {
-        if (!isInitialized) 
+        if (!isInitialized)
         {
             return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Application.Quit();
         }
 
         aim.x = Input.GetAxis("Mouse X");

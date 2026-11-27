@@ -8,7 +8,7 @@ using UnityEngine;
 public class FusionVoxelMeshController : NetworkBehaviour
 {
     [SerializeField]
-    private float sphereCastRaduis = 2f;
+    private float sphereCastRadius = 2f;
     [SerializeField]
     private GameObject sphereAimPrefab;
 
@@ -132,7 +132,7 @@ public class FusionVoxelMeshController : NetworkBehaviour
                         var pos = meshVoxelizer.transform.TransformPoint(closestNode.position);
 
                         sphereAim.transform.position = pos;
-                        sphereAim.transform.localScale = Vector3.one * sphereCastRaduis * 2;
+                        sphereAim.transform.localScale = Vector3.one * sphereCastRadius * 2;
                         sphereAim.gameObject.SetActive(!isEditing);
 
                         if (GetInput(out NetworkInputData networkInputData))
@@ -141,7 +141,7 @@ public class FusionVoxelMeshController : NetworkBehaviour
                             {
                                 if (networkInputData.isSphereDisabling)
                                 {
-                                    Vector4 data = new Vector4(voxelMeshScene.GetMeshVoxelizerIndex(meshVoxelizer), closestNode.index, sphereCastRaduis, -1);
+                                    Vector4 data = new Vector4(voxelMeshScene.GetMeshVoxelizerIndex(meshVoxelizer), closestNode.index, sphereCastRadius, -1);
                                     editedVoxels.Add(data);
                                     RPC_EditVoxels(data);
                                     isEditing = true;
@@ -149,7 +149,7 @@ public class FusionVoxelMeshController : NetworkBehaviour
 
                                 if (networkInputData.isSphereEnabling)
                                 {
-                                    Vector4 data = new Vector4(voxelMeshScene.GetMeshVoxelizerIndex(meshVoxelizer), closestNode.index, sphereCastRaduis, 1);
+                                    Vector4 data = new Vector4(voxelMeshScene.GetMeshVoxelizerIndex(meshVoxelizer), closestNode.index, sphereCastRadius, 1);
                                     editedVoxels.Add(data);
                                     RPC_EditVoxels(data);
                                     isEditing = true;
@@ -160,19 +160,16 @@ public class FusionVoxelMeshController : NetworkBehaviour
                     else
                     {
                         sphereAim.SetActive(false);
-                        //Debug.LogError($"No closest node on {meshVoxelizer}");
                     }
                 }
                 else
                 {
                     sphereAim.SetActive(false);
-                    //Debug.LogError($"No tree nodes found on {meshVoxelizer}");
                 }
             }
             else
             {
                 sphereAim.SetActive(false);
-                //Debug.LogError($"No mesh voxelizer on {hitInfo.collider.gameObject}");
             }
         }
         else
@@ -264,7 +261,8 @@ public class FusionVoxelMeshController : NetworkBehaviour
         RPC_SendEditData(player, networkBuffer, counter);
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    // NetworkBuffer is 512 bytes on the wire, which is over the 512-byte limit of the default RPC channel since Fusion 2.1.
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, Channel = RpcChannel.ReliableLargeData)]
     private void RPC_SendEditData([RpcTarget] PlayerRef player, NetworkBuffer data, int dataCount) 
     {
         Vector4 editData = Vector4.zero;

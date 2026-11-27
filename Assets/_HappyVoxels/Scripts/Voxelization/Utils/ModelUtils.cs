@@ -18,7 +18,6 @@ public class ModelUtils : MonoBehaviour
     {
         Bounds res;
 
-        //obj.transform.position = Vector3.zero;
 
         var renderers = obj.GetComponentsInChildren<Renderer>();
         if (withCollider)

@@ -1,0 +1,4 @@
+Photon capsule avatar (PhotonDummy)
+Source: Photon Fusion Intro Sample 2.0.0 RC3 (build 807), Exit Games / Photon Engine, https://www.photonengine.com/fusion
+Part of Photon's Fusion SDK samples, covered by Photon's SDK terms. Files unchanged; only this folder was kept
+(the player avatar uses PhotonDummy.prefab). The rest of the Intro Sample was removed from the project.

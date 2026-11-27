@@ -4,7 +4,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem.XR;
 
 public class FusionPlayerController : NetworkBehaviour
 {
@@ -69,6 +68,8 @@ public class FusionPlayerController : NetworkBehaviour
 
             characterController.Move(transform.TransformDirection(move));
 
+#if UNITY_EDITOR
+            // Debug-only avatar colour switching. FusionPlayer.Debug_ChangeDefaultAvatarType exists only in the editor.
             if (HasStateAuthority)
             {
                 if (networkInputData.changeToRed)
@@ -85,7 +86,8 @@ public class FusionPlayerController : NetworkBehaviour
                 {
                     player.Debug_ChangeDefaultAvatarType(AvatarType.Blue);
                 }
-            }            
+            }
+#endif
         }
 
         CheckRespawn();

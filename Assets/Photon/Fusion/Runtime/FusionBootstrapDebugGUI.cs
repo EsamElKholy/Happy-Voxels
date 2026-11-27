@@ -2,6 +2,9 @@ namespace Fusion {
   using System;
   using UnityEngine;
   using System.Collections.Generic;
+#if FUSION_ENABLE_INPUT_SYSTEM && ENABLE_INPUT_SYSTEM
+  using UnityEngine.InputSystem;
+#endif
 
   /// <summary>
   /// Companion component for <see cref="FusionBootstrap"/>. Automatically added as needed for rendering in-game networking IMGUI.
@@ -10,6 +13,8 @@ namespace Fusion {
   [AddComponentMenu("Fusion/Fusion Boostrap Debug GUI")]
   [ScriptHelp(BackColor = ScriptHeaderBackColor.Steel)]
   public class FusionBootstrapDebugGUI : Fusion.Behaviour {
+
+    enum Hotkey { SinglePlayer, Host, Server, Client, AutoClient, SharedClient }
 
     /// <summary>
     /// When enabled, the in-game user interface buttons can be activated with the keys H (Host), S (Server) and C (Client).
@@ -25,7 +30,7 @@ namespace Fusion {
 
     FusionBootstrap _networkDebugStart;
     string _clientCount;
-    bool _isMultiplePeerMode;
+    bool IsMultiplePeerMode => NetworkProjectConfig.Global.PeerMode == NetworkProjectConfig.PeerModes.Multiple;
 
     Dictionary<FusionBootstrap.Stage, string> _nicifiedStageNames;
 
@@ -66,7 +71,6 @@ namespace Fusion {
       ValidateClientCount();
     }
     protected virtual void Start() {
-      _isMultiplePeerMode = NetworkProjectConfig.Global.PeerMode == NetworkProjectConfig.PeerModes.Multiple;
     }
 
     protected FusionBootstrap EnsureNetworkDebugStartExists() {
@@ -87,7 +91,7 @@ namespace Fusion {
     private void Update() {
 
       var nds = EnsureNetworkDebugStartExists();
-      if (nds.StartMode != FusionBootstrap.StartModes.UserInterface) {
+      if (!nds.ShouldShowGUI) {
         return;
       }
 
@@ -97,44 +101,44 @@ namespace Fusion {
       }
 
       if (EnableHotkeys) {
-        if (Input.GetKeyDown(KeyCode.I)) {
+        if (GetHotkeyDown(Hotkey.SinglePlayer)) {
           _networkDebugStart.StartSinglePlayer();
         }
 
-        if (Input.GetKeyDown(KeyCode.H)) {
-          if (_isMultiplePeerMode) {
+        if (GetHotkeyDown(Hotkey.Host)) {
+          if (IsMultiplePeerMode) {
             StartHostWithClients(_networkDebugStart);
           } else {
             _networkDebugStart.StartHost();
           }
         }
 
-        if (Input.GetKeyDown(KeyCode.S)) {
-          if (_isMultiplePeerMode) {
+        if (GetHotkeyDown(Hotkey.Server)) {
+          if (IsMultiplePeerMode) {
             StartServerWithClients(_networkDebugStart);
           } else {
             _networkDebugStart.StartServer();
           }
         }
 
-        if (Input.GetKeyDown(KeyCode.C)) {
-          if (_isMultiplePeerMode) {
+        if (GetHotkeyDown(Hotkey.Client)) {
+          if (IsMultiplePeerMode) {
             StartMultipleClients(nds);
           } else {
             nds.StartClient();
           }
         }
 
-        if (Input.GetKeyDown(KeyCode.A)) {
-          if (_isMultiplePeerMode) {
+        if (GetHotkeyDown(Hotkey.AutoClient)) {
+          if (IsMultiplePeerMode) {
             StartMultipleAutoClients(nds);
           } else {
             nds.StartAutoClient();
           }
         }
 
-        if (Input.GetKeyDown(KeyCode.P)) {
-          if (_isMultiplePeerMode) {
+        if (GetHotkeyDown(Hotkey.SharedClient)) {
+          if (IsMultiplePeerMode) {
             StartMultipleSharedClients(nds);
           } else {
             nds.StartSharedClient();
@@ -143,10 +147,41 @@ namespace Fusion {
       }
     }
 
+    static bool GetHotkeyDown(Hotkey hotkey) {
+#if FUSION_ENABLE_INPUT_SYSTEM && ENABLE_INPUT_SYSTEM
+      var keyboard = Keyboard.current;
+      if (keyboard == null) {
+        return false;
+      }
+
+      return hotkey switch {
+        Hotkey.SinglePlayer => keyboard.iKey.wasPressedThisFrame,
+        Hotkey.Host         => keyboard.hKey.wasPressedThisFrame,
+        Hotkey.Server       => keyboard.sKey.wasPressedThisFrame,
+        Hotkey.Client       => keyboard.cKey.wasPressedThisFrame,
+        Hotkey.AutoClient   => keyboard.aKey.wasPressedThisFrame,
+        Hotkey.SharedClient => keyboard.pKey.wasPressedThisFrame,
+        _                   => false,
+      };
+#elif ENABLE_LEGACY_INPUT_MANAGER
+      return hotkey switch {
+        Hotkey.SinglePlayer => Input.GetKeyDown(KeyCode.I),
+        Hotkey.Host         => Input.GetKeyDown(KeyCode.H),
+        Hotkey.Server       => Input.GetKeyDown(KeyCode.S),
+        Hotkey.Client       => Input.GetKeyDown(KeyCode.C),
+        Hotkey.AutoClient   => Input.GetKeyDown(KeyCode.A),
+        Hotkey.SharedClient => Input.GetKeyDown(KeyCode.P),
+        _                   => false,
+      };
+#else
+      return false;
+#endif
+    }
+
     protected virtual void OnGUI() {
 
       var nds = EnsureNetworkDebugStartExists();
-      if (nds.StartMode != FusionBootstrap.StartModes.UserInterface) {
+      if (!nds.ShouldShowGUI) {
         return;
       }
 
@@ -196,7 +231,7 @@ namespace Fusion {
             }
 
             if (GUILayout.Button(EnableHotkeys ? "Start Shared Client (P)" : "Start Shared Client", GUILayout.Height(height))) {
-              if (_isMultiplePeerMode) {
+              if (IsMultiplePeerMode) {
                 StartMultipleSharedClients(nds);
               } else {
                 nds.StartSharedClient();
@@ -204,7 +239,7 @@ namespace Fusion {
             }
 
             if (GUILayout.Button(EnableHotkeys ? "Start Server (S)" : "Start Server", GUILayout.Height(height))) {
-              if (_isMultiplePeerMode) {
+              if (IsMultiplePeerMode) {
                 StartServerWithClients(nds);
 
               } else {
@@ -213,7 +248,7 @@ namespace Fusion {
             }
 
             if (GUILayout.Button(EnableHotkeys ? "Start Host (H)" : "Start Host", GUILayout.Height(height))) {
-              if (_isMultiplePeerMode) {
+              if (IsMultiplePeerMode) {
                 StartHostWithClients(nds);
               } else {
                 nds.StartHost();
@@ -221,7 +256,7 @@ namespace Fusion {
             }
 
             if (GUILayout.Button(EnableHotkeys ? "Start Client (C)" : "Start Client", GUILayout.Height(height))) {
-              if (_isMultiplePeerMode) {
+              if (IsMultiplePeerMode) {
                 StartMultipleClients(nds);
               } else {
                 nds.StartClient();
@@ -229,14 +264,14 @@ namespace Fusion {
             }
 
             if (GUILayout.Button(EnableHotkeys ? "Start Auto Host Or Client (A)" : "Start Auto Host Or Client", GUILayout.Height(height))) {
-              if (_isMultiplePeerMode) {
+              if (IsMultiplePeerMode) {
                 StartMultipleAutoClients(nds);
               } else {
                 nds.StartAutoClient();
               }
             }
 
-            if (_isMultiplePeerMode) {
+            if (IsMultiplePeerMode) {
 
               GUILayout.BeginHorizontal(/*GUI.skin.button*/);
               {
@@ -305,6 +340,9 @@ namespace Fusion {
       int count;
       try {
         count = Convert.ToInt32(_clientCount);
+        if (IsMultiplePeerMode) {
+          count++; // add 1 for convenience to match host mode
+        }
       } catch {
         count = 0;
       }

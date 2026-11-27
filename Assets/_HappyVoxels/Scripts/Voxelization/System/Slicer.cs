@@ -23,7 +23,6 @@ public class Slicer : MonoBehaviour
 
     public Action OnFinishedSlicing;
 
-    // Start is called before the first frame update
     void Start()
     {
         Vector3 up = transform.up;

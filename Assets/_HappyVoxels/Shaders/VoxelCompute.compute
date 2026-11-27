@@ -1,9 +1,7 @@
-﻿// Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel FillTree
+﻿#pragma kernel FillTree
 #pragma kernel ConstructMesh
 #pragma kernel ConstructMesh1
 #pragma kernel GetFilledVoxels
-#pragma kernel GetFilledVoxelsUVs
 #pragma kernel BuildTree
 #pragma kernel DisableVoxelsInSphere
 #pragma kernel EnableVoxelsInSphere
@@ -35,18 +33,12 @@ struct VoxelOctreeNode
 RWStructuredBuffer<VoxelOctreeNode> VoxelOctreeBuffer;
 
 RWStructuredBuffer<float3> VertexBuffer;
-	
-RWStructuredBuffer<float3> voxelUVsBuffer;
-//RWStructuredBuffer<float2> UVsBuffer;
-	
 RWStructuredBuffer<int> IndexBuffer;
 
 RWStructuredBuffer<float3> OutVerticesBuffer;
-//AppendStructuredBuffer<float2> OutUVsBuffer;
 RWStructuredBuffer<int> OutIndicesBuffer;
 
 AppendStructuredBuffer<VoxelOctreeNode> FilledVoxelPositionsBuffer;
-//AppendStructuredBuffer<float2> FilledVoxelUVsBuffer;
 
 RWStructuredBuffer<VoxelOctreeNode> _FilledVoxelPositionsBuffer;
 int FilledVoxelsCount;
@@ -58,8 +50,8 @@ float2 GetBoxInterval(float3 boxCenter, float3 boxSize, float3 axis)
 	float3 p1 = boxCenter - boxSize / 2.0;
 	float3 p2 = boxCenter + boxSize / 2.0;
 
-	float3 minP = p1;//float3(min(p1.x, p2.x), min(p1.y, p2.y), min(p1.z, p2.z));
-	float3 maxP = p2;//float3(max(p1.x, p2.x), max(p1.y, p2.y), max(p1.z, p2.z));
+	float3 minP = p1;
+	float3 maxP = p2;
 
 	float3 v0 = float3(minP.x, maxP.y, maxP.z);
 	float3 v1 = float3(minP.x, maxP.y, minP.z);
@@ -450,8 +442,6 @@ void FillTree(uint3 id : SV_DispatchThreadID)
 				if (intersecting == 1)
 				{
 					VoxelOctreeBuffer[j].Value = 1;
-						
-					//voxelUVsBuffer[j] = float3((UVsBuffer[i0] + UVsBuffer[i1] + UVsBuffer[i2]) / 3, j);
 				}
 			}
 
@@ -477,20 +467,6 @@ void GetFilledVoxels(uint3 id : SV_DispatchThreadID)
 		FilledVoxelPositionsBuffer.Append(VoxelOctreeBuffer[id.x]);
 	}
 }
-	
-//[numthreads(64, 1, 1)]
-//void GetFilledVoxelsUVs(uint3 id : SV_DispatchThreadID)
-//{		
-//	if (id.x >= VoxelCount)
-//	{
-//		return;
-//	}
-//	int index = id.x;
-//	if (voxelUVsBuffer[index].z >= 0)
-//	{
-//		FilledVoxelUVsBuffer.Append(voxelUVsBuffer[index].xy);
-//	}
-//}
 
 [numthreads(64, 1, 1)]
 void DisableVoxelsInSphere(uint3 id : SV_DispatchThreadID)
@@ -637,8 +613,6 @@ void ConstructMesh1(uint3 id : SV_DispatchThreadID)
 	}
 
 	int count = id.x;
-
-	float3 pos = _FilledVoxelPositionsBuffer[count].Position;
 
 	OutVerticesBuffer[count] = _FilledVoxelPositionsBuffer[count].Position;
 	

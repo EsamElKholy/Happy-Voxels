@@ -13,7 +13,6 @@ public class FollowObject : MonoBehaviour
         targetToFollow = target;
     }
 
-    // Update is called once per frame
     void FixedUpdate()
     {
         if (targetToFollow)

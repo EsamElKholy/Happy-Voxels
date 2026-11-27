@@ -71,7 +71,6 @@ public class FusionPlayerManager : SimulationBehaviour
             }
         }
 
-        Debug.LogWarning($"Cached players {spawnedPlayer.Count}");
     }
 
     private async UniTask WaitForSpawnToCache(PlayerRef player) 
@@ -94,7 +93,6 @@ public class FusionPlayerManager : SimulationBehaviour
             await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: this.GetCancellationTokenOnDestroy());
         }
 
-        Debug.LogError($"Cached players {spawnedPlayer.Count}");
         OnAnotherPlayerJoined?.Invoke(player);
     }
 
@@ -124,6 +122,5 @@ public class FusionPlayerManager : SimulationBehaviour
             }
         }
 
-        Debug.LogError($"Cached players {spawnedPlayer.Count}");
     }
 }
