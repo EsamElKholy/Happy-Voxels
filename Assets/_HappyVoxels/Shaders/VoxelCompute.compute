@@ -1,6 +1,6 @@
 ﻿#pragma kernel FillTree
-#pragma kernel ConstructMesh
-#pragma kernel ConstructMesh1
+#pragma kernel ConstructCubeMesh
+#pragma kernel ConstructPointMesh
 #pragma kernel GetFilledVoxels
 #pragma kernel BuildTree
 #pragma kernel DisableVoxelsInSphere
@@ -500,8 +500,10 @@ void EnableVoxelsInSphere(uint3 id : SV_DispatchThreadID)
     }
 }
 
+// Not used: builds full cube geometry on the GPU. Replaced by ConstructPointMesh plus the
+// geometry shader in VoxelLit.shader, which expands each point into a cube.
 [numthreads(64, 1, 1)]
-void ConstructMesh(uint3 id : SV_DispatchThreadID)
+void ConstructCubeMesh(uint3 id : SV_DispatchThreadID)
 {
 	if (id.x >= FilledVoxelsCount)
 	{
@@ -605,7 +607,7 @@ void ConstructMesh(uint3 id : SV_DispatchThreadID)
 }
 
 [numthreads(64, 1, 1)]
-void ConstructMesh1(uint3 id : SV_DispatchThreadID)
+void ConstructPointMesh(uint3 id : SV_DispatchThreadID)
 {
 	if (id.x >= FilledVoxelsCount)
 	{

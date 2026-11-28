@@ -20,8 +20,8 @@ public class MeshVoxelizer : MonoBehaviour
     private const string outVertexBuffer = "OutVerticesBuffer";
     private const string outIndexBuffer = "OutIndicesBuffer";
     private const string _filledVoxelPositionsBuffer = "_FilledVoxelPositionsBuffer";
-    private const string constructMeshKernel = "ConstructMesh";
-    private const string constructMeshKernel1 = "ConstructMesh1";
+    private const string constructCubeMeshKernel = "ConstructCubeMesh";
+    private const string constructPointMeshKernel = "ConstructPointMesh";
     private const string buildTreeKernel = "BuildTree";
     private const string sphereOrigin = "SpherecastOrigin";
     private const string sphereRadius = "SphereRadius";
@@ -307,7 +307,7 @@ public class MeshVoxelizer : MonoBehaviour
 
         voxelComputeShader.SetInt(filledVoxelsCount, voxelOctree.FilledNodes.Count);
 
-        var kernel = voxelComputeShader.FindKernel(constructMeshKernel1);
+        var kernel = voxelComputeShader.FindKernel(constructPointMeshKernel);
 
         voxelComputeShader.SetBuffer(kernel, outVertexBuffer, vertBuffer);
         voxelComputeShader.SetBuffer(kernel, outIndexBuffer, indBuffer);
@@ -348,7 +348,7 @@ public class MeshVoxelizer : MonoBehaviour
         var vertBuffer = new ComputeBuffer(voxelOctree.FilledNodes.Count, Marshal.SizeOf(typeof(Vector3)));
         var v = new Vector3[voxelOctree.FilledNodes.Count];
 
-        var kernel = voxelComputeShader.FindKernel(constructMeshKernel1);
+        var kernel = voxelComputeShader.FindKernel(constructPointMeshKernel);
 
         voxelComputeShader.SetInt(filledVoxelsCount, voxelOctree.FilledNodes.Count);
 
